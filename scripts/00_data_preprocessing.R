@@ -5,8 +5,9 @@ library(tidyverse)
 library(mice)
 library(VIM)
 
-# Load data
-df_raw <- read.csv("data.csv", stringsAsFactors = FALSE)
+# Load data (use population-corrected version)
+df_raw <- read.csv("data_population_corrected.csv", stringsAsFactors = FALSE,
+                   check.names = FALSE)
 
 # Clean column names
 colnames(df_raw) <- trimws(colnames(df_raw))
@@ -15,8 +16,9 @@ colnames(df_raw) <- gsub("\\s+", "_", colnames(df_raw))
 df_raw <- df_raw %>%
   rename(
     HIV_AIDS = `HIV/AIDS`,
-    thinness_10_19_years = `thinness__1-19_years`,
+    thinness_10_19_years = `thinness_1-19_years`,
     thinness_5_9_years = `thinness_5-9_years`,
+    under_five_deaths = `under-five_deaths`,
     Income_composition = Income_composition_of_resources
   )
 
@@ -49,7 +51,8 @@ numeric_cols <- df_clean %>%
 
 set.seed(123)
 df_for_imputation <- df_clean[, numeric_cols]
-mice_model <- mice(df_for_imputation, m = 5, maxit = 10, method = 'pmm', seed = 123, printFlag = FALSE)
+mice_model <- mice(df_for_imputation, m = 5, maxit = 10, method = 'cart',
+                   seed = 123, printFlag = FALSE)
 df_imputed <- complete(mice_model, 1)
 df_clean[, numeric_cols] <- df_imputed
 

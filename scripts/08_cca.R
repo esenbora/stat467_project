@@ -3,9 +3,18 @@
 
 library(tidyverse)
 library(CCA)
-library(CCP)
 library(corrplot)
 library(gridExtra)
+
+# Install CCP if not available
+if (!require(CCP, quietly = TRUE)) {
+  install.packages("CCP", repos = "https://cloud.r-project.org")
+  library(CCP)
+}
+
+# Fix namespace conflicts
+select <- dplyr::select
+filter <- dplyr::filter
 
 df <- read.csv("data_country_level.csv", stringsAsFactors = FALSE)
 df$Status <- as.factor(df$Status)

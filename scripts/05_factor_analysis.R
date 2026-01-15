@@ -8,6 +8,10 @@ library(corrplot)
 library(gridExtra)
 library(nFactors)
 
+# Fix namespace conflicts
+select <- dplyr::select
+filter <- dplyr::filter
+
 df <- read.csv("data_country_level.csv", stringsAsFactors = FALSE)
 df$Status <- as.factor(df$Status)
 
@@ -68,7 +72,9 @@ loadings_df$Variable <- rownames(loadings_df)
 loadings_df$Communality <- fa_varimax$communality
 
 cat("\n=== LOADINGS ===\n")
-print(round(loadings_df[, c("Variable", paste0("F", 1:n_factors), "Communality")], 3))
+loadings_print <- loadings_df[, c("Variable", paste0("F", 1:n_factors), "Communality")]
+loadings_print[, -1] <- round(loadings_print[, -1], 3)
+print(loadings_print)
 write.csv(loadings_df, "figures/fa_loadings.csv", row.names = FALSE)
 
 # Loadings heatmap

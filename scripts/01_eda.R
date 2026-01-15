@@ -108,7 +108,7 @@ ggsave("figures/pairs_plot.png", p_pairs, width = 14, height = 12, dpi = 150)
 
 # Multivariate normality check
 norm_vars <- c("Life_expectancy", "Adult_Mortality", "Schooling", "GDP_log", "Income_composition", "BMI", "HIV_AIDS")
-mvn_result <- MVN::mvn(df[, norm_vars], mvnTest = "mardia")
+mvn_result <- MVN::mvn(df[, norm_vars], mvn_test = "mardia")
 cat("\n=== Multivariate Normality (Mardia) ===\n")
 print(mvn_result$multivariateNormality)
 

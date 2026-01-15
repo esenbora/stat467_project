@@ -7,6 +7,10 @@ library(caret)
 library(pROC)
 library(gridExtra)
 
+# Fix namespace conflicts
+select <- dplyr::select
+filter <- dplyr::filter
+
 df <- read.csv("data_country_level.csv", stringsAsFactors = FALSE)
 df$Status <- as.factor(df$Status)
 
@@ -42,35 +46,49 @@ write.csv(lda_coef, "figures/lda_coefficients.csv", row.names = FALSE)
 
 # QDA
 cat("\n=== QDA ===\n")
-qda_model <- qda(Status ~ ., data = train_data[, c("Status", pred_vars)])
-qda_pred <- predict(qda_model, test_data)
-qda_cm <- confusionMatrix(qda_pred$class, test_data$Status)
-print(qda_cm)
+qda_success <- FALSE
+tryCatch({
+  qda_model <- qda(Status ~ ., data = train_data[, c("Status", pred_vars)])
+  qda_pred <- predict(qda_model, test_data)
+  qda_cm <- confusionMatrix(qda_pred$class, test_data$Status)
+  print(qda_cm)
+  qda_success <- TRUE
+}, error = function(e) {
+  cat("QDA failed (rank deficiency - group size too small for # predictors)\n")
+  cat("Skipping QDA, using LDA only\n")
+})
 
 # Cross-validation
 cat("\n=== CROSS-VALIDATION ===\n")
 cv_ctrl <- trainControl(method = "cv", number = 5, classProbs = TRUE, summaryFunction = twoClassSummary)
 
 lda_cv <- train(Status ~ ., data = df_class[, c("Status", pred_vars)], method = "lda", trControl = cv_ctrl, metric = "ROC")
-qda_cv <- train(Status ~ ., data = df_class[, c("Status", pred_vars)], method = "qda", trControl = cv_ctrl, metric = "ROC")
-
 cat("LDA CV ROC:", round(lda_cv$results$ROC, 4), "\n")
-cat("QDA CV ROC:", round(qda_cv$results$ROC, 4), "\n")
+
+if (qda_success) {
+  qda_cv <- train(Status ~ ., data = df_class[, c("Status", pred_vars)], method = "qda", trControl = cv_ctrl, metric = "ROC")
+  cat("QDA CV ROC:", round(qda_cv$results$ROC, 4), "\n")
+}
 
 # ROC curves
 roc_lda <- roc(test_data$Status, lda_pred$posterior[, "Developed"], levels = c("Developing", "Developed"))
-roc_qda <- roc(test_data$Status, qda_pred$posterior[, "Developed"], levels = c("Developing", "Developed"))
-
 cat("\nLDA AUC:", round(auc(roc_lda), 4), "\n")
-cat("QDA AUC:", round(auc(roc_qda), 4), "\n")
 
 png("figures/classification_roc_curves.png", width = 900, height = 700, res = 120)
-plot(roc_lda, col = "#2E86AB", lwd = 2, main = "ROC Curves: LDA vs QDA")
-plot(roc_qda, col = "#E94F37", lwd = 2, add = TRUE)
-abline(a = 0, b = 1, lty = 2, col = "gray")
-legend("bottomright", c(paste("LDA (AUC =", round(auc(roc_lda), 3), ")"),
-                        paste("QDA (AUC =", round(auc(roc_qda), 3), ")")),
-       col = c("#2E86AB", "#E94F37"), lwd = 2)
+if (qda_success) {
+  roc_qda <- roc(test_data$Status, qda_pred$posterior[, "Developed"], levels = c("Developing", "Developed"))
+  cat("QDA AUC:", round(auc(roc_qda), 4), "\n")
+  plot(roc_lda, col = "#2E86AB", lwd = 2, main = "ROC Curves: LDA vs QDA")
+  plot(roc_qda, col = "#E94F37", lwd = 2, add = TRUE)
+  abline(a = 0, b = 1, lty = 2, col = "gray")
+  legend("bottomright", c(paste("LDA (AUC =", round(auc(roc_lda), 3), ")"),
+                          paste("QDA (AUC =", round(auc(roc_qda), 3), ")")),
+         col = c("#2E86AB", "#E94F37"), lwd = 2)
+} else {
+  plot(roc_lda, col = "#2E86AB", lwd = 2, main = "ROC Curve: LDA")
+  abline(a = 0, b = 1, lty = 2, col = "gray")
+  legend("bottomright", paste("LDA (AUC =", round(auc(roc_lda), 3), ")"), col = "#2E86AB", lwd = 2)
+}
 dev.off()
 
 # Confusion matrix plots
@@ -84,8 +102,12 @@ plot_cm <- function(cm, title) {
 }
 
 p_lda <- plot_cm(lda_cm, paste("LDA\nAcc:", round(lda_cm$overall["Accuracy"], 3)))
-p_qda <- plot_cm(qda_cm, paste("QDA\nAcc:", round(qda_cm$overall["Accuracy"], 3)))
-ggsave("figures/classification_confusion_matrices.png", grid.arrange(p_lda, p_qda, ncol = 2), width = 12, height = 5, dpi = 150)
+if (qda_success) {
+  p_qda <- plot_cm(qda_cm, paste("QDA\nAcc:", round(qda_cm$overall["Accuracy"], 3)))
+  ggsave("figures/classification_confusion_matrices.png", grid.arrange(p_lda, p_qda, ncol = 2), width = 12, height = 5, dpi = 150)
+} else {
+  ggsave("figures/classification_confusion_matrices.png", p_lda, width = 6, height = 5, dpi = 150)
+}
 
 # LDA projection
 lda_scores <- predict(lda_model, df_class)$x

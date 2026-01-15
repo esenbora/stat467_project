@@ -7,6 +7,10 @@ library(factoextra)
 library(dendextend)
 library(mclust)
 
+# Fix namespace conflicts
+select <- dplyr::select
+filter <- dplyr::filter
+
 df <- read.csv("data_country_level.csv", stringsAsFactors = FALSE)
 df$Status <- as.factor(df$Status)
 
@@ -122,7 +126,7 @@ ggsave("figures/cluster_profiles_plot.png", p_prof, width = 14, height = 7, dpi 
 for (cl in 1:optimal_k) {
   cat("\n--- Cluster", cl, "---\n")
   countries <- df_cluster %>% filter(KM_Cluster == cl) %>% pull(Country)
-  status <- df_cluster %>% filter(KM_Cluster == cl) %>% count(Status)
+  status <- df_cluster %>% filter(KM_Cluster == cl) %>% dplyr::count(Status)
   cat("n =", length(countries), ", Status:", paste(paste(status$Status, status$n, sep = "="), collapse = ", "), "\n")
   cat("Examples:", paste(head(countries, 5), collapse = ", "), "\n")
 }

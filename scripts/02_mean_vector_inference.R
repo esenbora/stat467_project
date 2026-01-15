@@ -7,6 +7,10 @@ library(Hotelling)
 library(MVN)
 library(ellipse)
 
+# Fix namespace conflicts
+select <- dplyr::select
+filter <- dplyr::filter
+
 df <- read.csv("data_country_level.csv", stringsAsFactors = FALSE)
 df$Status <- as.factor(df$Status)
 
@@ -26,7 +30,7 @@ cat("=== Sample Mean Vector ===\n")
 print(round(x_bar, 3))
 
 # Multivariate normality
-mvn_result <- MVN::mvn(as.data.frame(X), mvnTest = "mardia")
+mvn_result <- MVN::mvn(as.data.frame(X), mvn_test = "mardia")
 cat("\n=== Multivariate Normality (Mardia) ===\n")
 print(mvn_result$multivariateNormality)
 

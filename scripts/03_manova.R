@@ -8,6 +8,10 @@ library(biotools)
 library(MVN)
 library(ggpubr)
 
+# Fix namespace conflicts
+select <- dplyr::select
+filter <- dplyr::filter
+
 df <- read.csv("data_country_level.csv", stringsAsFactors = FALSE)
 df$Status <- as.factor(df$Status)
 
