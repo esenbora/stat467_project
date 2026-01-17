@@ -6,6 +6,8 @@ library(MASS)
 library(caret)
 library(pROC)
 library(gridExtra)
+library(biotools)  # For Box's M test
+library(MVN)       # For multivariate normality
 
 # Fix namespace conflicts
 select <- dplyr::select
@@ -31,9 +33,58 @@ test_data <- df_class[-train_idx, ]
 
 cat("Train:", nrow(train_data), ", Test:", nrow(test_data), "\n\n")
 
+# LDA ASSUMPTION TESTS
+cat("=== LDA ASSUMPTION TESTS ===\n")
+
+# 1. Box's M Test for equality of covariance matrices
+cat("\n1. Box's M Test (Covariance Homogeneity):\n")
+X_class_matrix <- as.matrix(df_class[, pred_vars])
+box_m_result <- biotools::boxM(X_class_matrix, df_class$Status)
+print(box_m_result)
+
+if (is.infinite(box_m_result$statistic) || is.na(box_m_result$p.value)) {
+  cat("WARNING: Box's M test returned Inf/NA - possible singularity\n")
+  cat("Recommendation: LDA may still be appropriate, but interpret with caution\n")
+} else if (box_m_result$p.value < 0.05) {
+  cat("WARNING: Covariance matrices are NOT equal (p < 0.05)\n")
+  cat("Recommendation: Consider QDA or interpret LDA results cautiously\n")
+} else {
+  cat("Covariance homogeneity assumption is met (p >= 0.05)\n")
+}
+
+# 2. Multivariate Normality by Group
+cat("\n2. Multivariate Normality by Group (Mardia's Test):\n")
+for (grp in levels(df_class$Status)) {
+  cat("\n  ", grp, ":\n", sep = "")
+  grp_data <- df_class %>% dplyr::filter(Status == grp) %>%
+    dplyr::select(all_of(pred_vars))
+  tryCatch({
+    mvn_result <- MVN::mvn(grp_data, mvnTest = "mardia")
+    cat("    Skewness p =", format(mvn_result$multivariateNormality$`p value`[1],
+                                   digits = 3), "\n")
+    cat("    Kurtosis p =", format(mvn_result$multivariateNormality$`p value`[2],
+                                   digits = 3), "\n")
+    if (mvn_result$multivariateNormality$Result[1] == "NO" ||
+        mvn_result$multivariateNormality$Result[2] == "NO") {
+      cat("    WARNING: MVN may be violated for this group\n")
+    } else {
+      cat("    MVN assumption met\n")
+    }
+  }, error = function(e) {
+    cat("    MVN test failed:", conditionMessage(e), "\n")
+  })
+}
+
+# Calculate class proportions for priors
+class_props <- prop.table(table(train_data$Status))
+cat("\n3. Class Proportions (for prior probabilities):\n")
+print(round(class_props, 3))
+
 # LDA
-cat("=== LDA ===\n")
-lda_model <- lda(Status ~ ., data = train_data[, c("Status", pred_vars)])
+cat("\n=== LDA ===\n")
+# Use observed class proportions as priors (more realistic than equal priors)
+lda_model <- lda(Status ~ ., data = train_data[, c("Status", pred_vars)],
+                 prior = class_props)
 print(lda_model)
 
 lda_pred <- predict(lda_model, test_data)
@@ -48,7 +99,9 @@ write.csv(lda_coef, "figures/lda_coefficients.csv", row.names = FALSE)
 cat("\n=== QDA ===\n")
 qda_success <- FALSE
 tryCatch({
-  qda_model <- qda(Status ~ ., data = train_data[, c("Status", pred_vars)])
+  # Use same priors as LDA for consistency
+  qda_model <- qda(Status ~ ., data = train_data[, c("Status", pred_vars)],
+                   prior = class_props)
   qda_pred <- predict(qda_model, test_data)
   qda_cm <- confusionMatrix(qda_pred$class, test_data$Status)
   print(qda_cm)
@@ -126,24 +179,34 @@ p_2d <- ggplot(df_class, aes(x = Life_expectancy, y = Schooling, color = Status)
   labs(title = "Classification Space") + theme_minimal()
 ggsave("figures/classification_2d.png", p_2d, width = 10, height = 8, dpi = 150)
 
-# Misclassified countries
-lda_all <- predict(lda_model, df_class)
-misclass <- df_class %>%
-  mutate(Predicted = lda_all$class, Prob = round(lda_all$posterior[,"Developed"], 3)) %>%
-  filter(Status != Predicted) %>%
-  select(Country, Status, Predicted, Prob)
+# Misclassified countries (using TEST SET for honest error estimate)
+cat("\n=== MISCLASSIFIED (Test Set) ===\n")
+test_misclass <- test_data %>%
+  mutate(Predicted = lda_pred$class,
+         Prob_Developed = round(lda_pred$posterior[, "Developed"], 3)) %>%
+  dplyr::filter(Status != Predicted) %>%
+  dplyr::select(Country, Status, Predicted, Prob_Developed)
 
-cat("\n=== MISCLASSIFIED ===\n")
-print(misclass)
-write.csv(misclass, "figures/lda_misclassified.csv", row.names = FALSE)
+if (nrow(test_misclass) > 0) {
+  print(test_misclass)
+} else {
+  cat("No misclassifications in test set\n")
+}
+write.csv(test_misclass, "figures/lda_misclassified.csv", row.names = FALSE)
 
-# Variable importance
+# Variable importance (standardized discriminant coefficients)
+# Note: This is |coefficient| × SD, a common heuristic for importance
+cat("\n=== VARIABLE IMPORTANCE ===\n")
+cat("(Using |LD1 coefficient| × variable SD - a common heuristic)\n\n")
 sd_vars <- apply(df_class[, pred_vars], 2, sd)
-var_imp <- data.frame(Variable = names(sd_vars),
-                      Importance = round(abs(lda_model$scaling[,1]) * sd_vars, 4)) %>%
+var_imp <- data.frame(
+  Variable = names(sd_vars),
+  LD1_Coef = round(lda_model$scaling[, 1], 4),
+  SD = round(sd_vars, 4),
+  Importance = round(abs(lda_model$scaling[, 1]) * sd_vars, 4)
+) %>%
   arrange(desc(Importance))
 
-cat("\n=== VARIABLE IMPORTANCE ===\n")
 print(var_imp)
 
 p_imp <- ggplot(var_imp, aes(x = reorder(Variable, Importance), y = Importance)) +
@@ -153,3 +216,4 @@ ggsave("figures/classification_var_importance.png", p_imp, width = 10, height = 
 
 cat("\n=== Classification Complete ===\n")
 cat("Run 07_clustering.R next.\n")
+

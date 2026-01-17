@@ -32,13 +32,55 @@ n_per_group <- table(df_manova$Status)
 print(n_per_group)
 cat("n_min > p:", min(n_per_group), ">", length(dv_vars), "\n\n")
 
+# Multivariate outlier detection
+cat("--- Outliers (Mahalanobis) ---\n")
+X_outlier <- as.matrix(df_manova[, dv_vars])
+center <- colMeans(X_outlier)
+cov_mat <- cov(X_outlier)
+mahal_dist <- mahalanobis(X_outlier, center, cov_mat)
+cutoff <- qchisq(0.975, df = length(dv_vars))
+outliers <- which(mahal_dist > cutoff)
+cat("Chi-sq cutoff (df=", length(dv_vars), ", alpha=0.025):", round(cutoff, 2), "\n")
+cat("Potential outliers:", length(outliers), "countries\n")
+if (length(outliers) > 0 && length(outliers) <= 10) {
+  cat("Countries:", paste(df_manova$Country[outliers], collapse = ", "), "\n")
+} else if (length(outliers) > 10) {
+  cat("First 10:", paste(df_manova$Country[outliers[1:10]], collapse = ", "), "...\n")
+}
+cat("\n")
+
+# Multivariate normality by group
+cat("--- Multivariate Normality (Mardia) ---\n")
+for (grp in levels(df_manova$Status)) {
+  cat("\n", grp, ":\n", sep = "")
+  grp_data <- df_manova %>% filter(Status == grp) %>% select(all_of(dv_vars))
+  tryCatch({
+    mvn_result <- MVN::mvn(grp_data, mvn = "mardia")
+    print(mvn_result$multivariate_normality)
+  }, error = function(e) {
+    cat("MVN test failed: ", conditionMessage(e), "\n")
+    cat("(Likely due to singular covariance matrix with small sample size)\n")
+  })
+}
+cat("\n")
+
 # Box's M test
 X_matrix <- as.matrix(df_manova[, dv_vars])
 box_m <- biotools::boxM(X_matrix, df_manova$Status)
 print(box_m)
 
-if (box_m$p.value < 0.05) {
-  cat("Box's M significant - use Pillai's Trace (robust)\n\n")
+cat("\n--- Box's M Interpretation ---\n")
+if (is.infinite(box_m$statistic) || is.na(box_m$p.value)) {
+  cat("Box's M test returned Inf or NA - possible singularity in covariance matrix\n")
+  cat("This can occur with near-collinear variables or small group sizes\n")
+  cat("Recommendation: Use Pillai's Trace (most robust to violations)\n\n")
+} else if (box_m$p.value < 0.05) {
+  cat("Box's M significant (p < 0.05)\n")
+  cat("Covariance matrices are NOT equal across groups\n")
+  cat("Recommendation: Use Pillai's Trace (most robust to violations)\n\n")
+} else {
+  cat("Box's M not significant (p >= 0.05)\n")
+  cat("Homogeneity of covariance matrices assumption is met\n\n")
 }
 
 # Descriptives
@@ -73,7 +115,7 @@ roy <- summary(manova_fit, test = "Roy")
 
 test_summary <- data.frame(
   Test = c("Pillai", "Wilks", "Hotelling-Lawley", "Roy"),
-  Statistic = round(c(pillai$stats[1,1], wilks$stats[1,1], hotelling$stats[1,1], roy$stats[1,1]), 4),
+  Statistic = round(c(pillai$stats[1,2], wilks$stats[1,2], hotelling$stats[1,2], roy$stats[1,2]), 4),
   F = round(c(pillai$stats[1,3], wilks$stats[1,3], hotelling$stats[1,3], roy$stats[1,3]), 2),
   p_value = format(c(pillai$stats[1,6], wilks$stats[1,6], hotelling$stats[1,6], roy$stats[1,6]), scientific = TRUE, digits = 3)
 )
@@ -140,21 +182,47 @@ p_centroids <- ggplot(df_manova, aes(x = Life_expectancy, y = Schooling, color =
 ggsave("figures/manova_centroids.png", p_centroids, width = 10, height = 8, dpi = 150)
 
 # Discriminant coefficients
+# CRITICAL FIX: Calculate mean difference from RAW DATA, not rounded means_table
 n1 <- sum(df_manova$Status == "Developed")
 n2 <- sum(df_manova$Status == "Developing")
-S1 <- cov(df_manova %>% filter(Status == "Developed") %>% select(all_of(dv_vars)))
-S2 <- cov(df_manova %>% filter(Status == "Developing") %>% select(all_of(dv_vars)))
-Sp <- ((n1-1)*S1 + (n2-1)*S2) / (n1 + n2 - 2)
 
-mean_diff <- as.numeric(means_table[1, dv_vars] - means_table[2, dv_vars])
+# Get group data
+grp1_data <- df_manova %>% filter(Status == "Developed") %>% select(all_of(dv_vars))
+grp2_data <- df_manova %>% filter(Status == "Developing") %>% select(all_of(dv_vars))
+
+# Calculate covariance matrices
+S1 <- cov(grp1_data)
+S2 <- cov(grp2_data)
+
+# Pooled covariance matrix
+Sp <- ((n1 - 1) * S1 + (n2 - 1) * S2) / (n1 + n2 - 2)
+
+# Mean difference from RAW data (not rounded means_table)
+x_bar1 <- colMeans(grp1_data)
+x_bar2 <- colMeans(grp2_data)
+mean_diff <- x_bar1 - x_bar2
+
+# Raw discriminant coefficients: a = Sp^{-1} * (x_bar1 - x_bar2)
 disc_coef <- solve(Sp) %*% mean_diff
+
+# Standardized discriminant coefficients: a_std = a * sqrt(diag(Sp))
+# This gives coefficients for standardized variables (mean=0, sd=1)
 disc_std <- disc_coef * sqrt(diag(Sp))
 
 cat("\n=== DISCRIMINANT COEFFICIENTS ===\n")
-disc_df <- data.frame(Variable = dv_vars, Raw = round(disc_coef, 4), Standardized = round(disc_std, 4))
+cat("Raw coefficients: for original scale variables\n")
+cat("Standardized: for comparison across variables with different scales\n\n")
+disc_df <- data.frame(
+  Variable = dv_vars,
+  Raw = round(as.numeric(disc_coef), 6),
+  Standardized = round(as.numeric(disc_std), 4)
+)
 disc_df <- disc_df %>% arrange(desc(abs(Standardized)))
 print(disc_df)
 write.csv(disc_df, "figures/discriminant_coefficients.csv", row.names = FALSE)
 
 cat("\n=== MANOVA Complete ===\n")
 cat("Run 04_pca_regression.R next.\n")
+
+
+

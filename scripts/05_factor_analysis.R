@@ -50,17 +50,33 @@ pa <- fa.parallel(X_fa, fa = "fa", n.iter = 100, main = "Parallel Analysis")
 dev.off()
 cat("Parallel analysis suggests:", pa$nfact, "factors\n")
 
-n_factors <- max(pa$nfact, 4)
-cat("Using", n_factors, "factors\n")
+# CRITICAL FIX: Use parallel analysis result directly, no arbitrary floor
+n_factors <- pa$nfact
+cat("Using", n_factors, "factors (from parallel analysis)\n")
+
+# Check for MVN to determine extraction method
+cat("\n=== MVN CHECK FOR EXTRACTION METHOD ===\n")
+mvn_result <- MVN::mvn(X_fa, mvnTest = "mardia")
+mvn_pass <- mvn_result$multivariateNormality$Result[1] == "YES"
+
+if (mvn_pass) {
+  cat("MVN assumption met - using Maximum Likelihood (ML) extraction\n")
+  fm_method <- "ml"
+} else {
+  cat("MVN assumption violated - using Principal Axis (PA) extraction (robust)\n")
+  fm_method <- "pa"
+}
 
 # Factor Analysis - Varimax
 cat("\n=== FA WITH VARIMAX ===\n")
-fa_varimax <- fa(X_fa, nfactors = n_factors, rotate = "varimax", fm = "ml", scores = "regression")
+fa_varimax <- fa(X_fa, nfactors = n_factors, rotate = "varimax",
+                 fm = fm_method, scores = "regression")
 print(fa_varimax, cut = 0.3, sort = TRUE)
 
 # Factor Analysis - Promax
 cat("\n=== FA WITH PROMAX ===\n")
-fa_promax <- fa(X_fa, nfactors = n_factors, rotate = "promax", fm = "ml", scores = "regression")
+fa_promax <- fa(X_fa, nfactors = n_factors, rotate = "promax",
+                fm = fm_method, scores = "regression")
 print(fa_promax, cut = 0.3, sort = TRUE)
 
 # Loadings table
@@ -76,6 +92,21 @@ loadings_print <- loadings_df[, c("Variable", paste0("F", 1:n_factors), "Communa
 loadings_print[, -1] <- round(loadings_print[, -1], 3)
 print(loadings_print)
 write.csv(loadings_df, "figures/fa_loadings.csv", row.names = FALSE)
+
+# Check for low communalities
+cat("\n=== COMMUNALITY CHECK ===\n")
+low_comm_threshold <- 0.4
+low_comm_vars <- loadings_df$Variable[loadings_df$Communality < low_comm_threshold]
+if (length(low_comm_vars) > 0) {
+  cat("WARNING: Variables with low communality (< 0.4):\n")
+  for (v in low_comm_vars) {
+    comm_val <- loadings_df$Communality[loadings_df$Variable == v]
+    cat("  ", v, ": ", round(comm_val, 3), "\n", sep = "")
+  }
+  cat("Consider removing these variables or using more factors\n")
+} else {
+  cat("All variables have adequate communality (>= 0.4)\n")
+}
 
 # Loadings heatmap
 loadings_long <- loadings_df %>%
@@ -136,11 +167,33 @@ p_f1f3 <- ggplot(factor_scores, aes(x = F1, y = F3, color = Status)) +
 
 ggsave("figures/fa_factor_scores_plot.png", grid.arrange(p_f1f2, p_f1f3, ncol = 2), width = 14, height = 6, dpi = 150)
 
-# Model fit
+# Model fit with interpretation thresholds
 cat("\n=== MODEL FIT ===\n")
-cat("TLI:", round(fa_varimax$TLI, 3), "\n")
-cat("RMSEA:", round(fa_varimax$RMSEA[1], 3), "\n")
-cat("BIC:", round(fa_varimax$BIC, 2), "\n")
+tli_val <- fa_varimax$TLI
+rmsea_val <- fa_varimax$RMSEA[1]
+bic_val <- fa_varimax$BIC
+
+cat("TLI:", round(tli_val, 3))
+if (tli_val >= 0.95) {
+  cat(" (Excellent, >= 0.95)\n")
+} else if (tli_val >= 0.90) {
+  cat(" (Acceptable, >= 0.90)\n")
+} else {
+  cat(" (Poor, < 0.90 - consider more/fewer factors)\n")
+}
+
+cat("RMSEA:", round(rmsea_val, 3))
+if (rmsea_val <= 0.05) {
+  cat(" (Good, <= 0.05)\n")
+} else if (rmsea_val <= 0.08) {
+  cat(" (Acceptable, <= 0.08)\n")
+} else {
+  cat(" (Mediocre/Poor, > 0.08)\n")
+}
+
+cat("BIC:", round(bic_val, 2), "(lower is better)\n")
 
 cat("\n=== Factor Analysis Complete ===\n")
 cat("Run 06_classification.R next.\n")
+
+

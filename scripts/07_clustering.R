@@ -50,8 +50,18 @@ set.seed(123)
 gap <- clusGap(X_scaled, FUN = kmeans, nstart = 25, K.max = 10, B = 50)
 ggsave("figures/clustering_gap.png", fviz_gap_stat(gap) + theme_minimal(), width = 10, height = 6, dpi = 150)
 
-optimal_k <- 4
-cat("Using k =", optimal_k, "\n")
+# Determine optimal k using Gap statistic (Tibshirani et al., 2001)
+# firstSEmax method: first k where gap(k) >= gap(k+1) - SE(k+1)
+optimal_k_gap <- maxSE(gap$Tab[, "gap"], gap$Tab[, "SE.sim"], method = "firstSEmax")
+optimal_k_sil <- which.max(sil_width) + 1
+
+cat("\nOptimal k selection:\n")
+cat("  Gap statistic (firstSEmax):", optimal_k_gap, "\n")
+cat("  Silhouette method:", optimal_k_sil, "\n")
+
+# Use Gap statistic as primary criterion (more rigorous)
+optimal_k <- optimal_k_gap
+cat("Using k =", optimal_k, "(based on Gap statistic)\n")
 
 # Hierarchical clustering
 cat("\n=== HIERARCHICAL CLUSTERING ===\n")
@@ -89,7 +99,29 @@ ggsave("figures/clustering_kmeans.png", p_km, width = 14, height = 10, dpi = 150
 # Validation
 cat("\n=== VALIDATION ===\n")
 sil_km <- silhouette(km$cluster, dist_mat)
-cat("Avg silhouette:", round(mean(sil_km[, 3]), 3), "\n")
+avg_sil <- mean(sil_km[, 3])
+cat("Avg silhouette:", round(avg_sil, 3), "\n")
+
+# Check silhouette quality by cluster
+cat("\nSilhouette by cluster:\n")
+sil_by_cluster <- aggregate(sil_km[, 3], by = list(Cluster = km$cluster), FUN = mean)
+colnames(sil_by_cluster)[2] <- "Avg_Silhouette"
+print(round(sil_by_cluster, 3))
+
+# Warn if any cluster has negative average silhouette
+neg_sil_clusters <- sil_by_cluster$Cluster[sil_by_cluster$Avg_Silhouette < 0]
+if (length(neg_sil_clusters) > 0) {
+  cat("WARNING: Cluster(s)", paste(neg_sil_clusters, collapse = ", "),
+      "have negative avg silhouette (poor separation)\n")
+}
+
+# Check cluster size imbalance
+cluster_sizes <- table(km$cluster)
+size_ratio <- max(cluster_sizes) / min(cluster_sizes)
+cat("\nCluster size ratio (max/min):", round(size_ratio, 2), "\n")
+if (size_ratio > 5) {
+  cat("WARNING: High size imbalance - consider different k or clustering method\n")
+}
 
 ggsave("figures/clustering_silhouette_plot.png",
        fviz_silhouette(sil_km, palette = c("#2E86AB", "#E94F37", "#2EAB5B", "#AB8F2E")) + theme_minimal(),
@@ -110,9 +142,15 @@ profiles <- df_cluster %>%
 print(profiles)
 write.csv(profiles, "figures/cluster_profiles.csv", row.names = FALSE)
 
-profiles_std <- df_cluster %>%
+# CRITICAL FIX: Use globally-scaled data for cluster profiles
+# Previous code scaled WITHIN each cluster, making cross-cluster comparison invalid
+# Now we use X_scaled (already scaled across ALL data) for proper comparison
+X_scaled_df <- as.data.frame(X_scaled)
+X_scaled_df$KM_Cluster <- df_cluster$KM_Cluster
+
+profiles_std <- X_scaled_df %>%
   group_by(KM_Cluster) %>%
-  summarise(across(all_of(cluster_vars), ~mean(scale(.)[,1]))) %>%
+  summarise(across(all_of(cluster_vars), mean)) %>%
   pivot_longer(-KM_Cluster, names_to = "Variable", values_to = "Mean")
 
 p_prof <- ggplot(profiles_std, aes(x = Variable, y = Mean, fill = KM_Cluster)) +
@@ -136,3 +174,5 @@ write.csv(df_cluster %>% select(Country, Status, KM_Cluster) %>% arrange(KM_Clus
 
 cat("\n=== Clustering Complete ===\n")
 cat("Run 08_cca.R next.\n")
+
+

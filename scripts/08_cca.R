@@ -70,6 +70,49 @@ chi_sq <- -(n - 1 - (p + q + 1)/2) * log(lambda1)
 p_val <- 1 - pchisq(chi_sq, p * q)
 cat("\nOverall Wilks:", round(lambda1, 4), ", Chi-sq:", round(chi_sq, 2), ", p:", format(p_val, scientific = TRUE), "\n")
 
+# CRITICAL FIX: Sequential tests for each canonical correlation
+# Tests H0: rho_i = rho_{i+1} = ... = rho_s = 0 (all remaining correlations are zero)
+cat("\n=== SEQUENTIAL DIMENSION TESTS ===\n")
+cat("Testing significance of each canonical correlation:\n\n")
+
+seq_results <- data.frame(
+  CV = paste0("CV", 1:n_cc),
+  r = round(rho, 4),
+  r_sq = round(rho^2, 4),
+  Wilks_Lambda = NA,
+  Chi_sq = NA,
+  df = NA,
+  p_value = NA,
+  Significant = NA
+)
+
+for (i in 1:n_cc) {
+  # Wilks' Lambda for dimensions i through s
+  lambda_i <- prod(1 - rho[i:n_cc]^2)
+
+  # Degrees of freedom for this test
+  df_i <- (p - i + 1) * (q - i + 1)
+
+  # Bartlett's chi-square approximation
+  chi_i <- -(n - 1 - (p + q + 1)/2) * log(lambda_i)
+
+  # P-value
+  p_val_i <- 1 - pchisq(chi_i, df_i)
+
+  seq_results$Wilks_Lambda[i] <- round(lambda_i, 4)
+  seq_results$Chi_sq[i] <- round(chi_i, 2)
+  seq_results$df[i] <- df_i
+  seq_results$p_value[i] <- p_val_i
+  seq_results$Significant[i] <- ifelse(p_val_i < 0.05, "*", "")
+}
+
+print(seq_results)
+write.csv(seq_results, "figures/cca_sequential_tests.csv", row.names = FALSE)
+
+# Count significant canonical correlations
+n_sig <- sum(seq_results$p_value < 0.05)
+cat("\nNumber of significant canonical correlations (alpha=0.05):", n_sig, "out of", n_cc, "\n")
+
 # Coefficients
 cat("\n=== COEFFICIENTS ===\n")
 coef_X <- cca_result$xcoef
@@ -105,15 +148,50 @@ print(round(loadings_Y, 3))
 write.csv(round(loadings_X, 4), "figures/cca_loadings_X.csv")
 write.csv(round(loadings_Y, 4), "figures/cca_loadings_Y.csv")
 
-# Redundancy
-var_X_U <- colMeans(loadings_X^2)
-var_Y_V <- colMeans(loadings_Y^2)
-rd_X_Y <- var_X_U * rho^2
-rd_Y_X <- var_Y_V * rho^2
+# LOADING INTERPRETATION: Identify important variables (|loading| >= 0.4)
+cat("\n=== LOADING INTERPRETATION ===\n")
+cat("Variables with |loading| >= 0.4 are considered important contributors\n\n")
 
-cat("\n=== REDUNDANCY ===\n")
-cat("Variance in X explained by Y:", round(sum(rd_X_Y) * 100, 1), "%\n")
-cat("Variance in Y explained by X:", round(sum(rd_Y_X) * 100, 1), "%\n")
+loading_threshold <- 0.4
+
+for (cv_idx in 1:min(n_sig, 3)) {  # Focus on significant CVs, max 3
+  cat("--- CV", cv_idx, "(r =", round(rho[cv_idx], 3), ") ---\n")
+
+  # Important X variables
+  x_important <- which(abs(loadings_X[, cv_idx]) >= loading_threshold)
+  if (length(x_important) > 0) {
+    cat("Socioeconomic (X) variables:\n")
+    for (idx in x_important) {
+      cat("  ", rownames(loadings_X)[idx], ": ", round(loadings_X[idx, cv_idx], 3), "\n", sep = "")
+    }
+  } else {
+    cat("Socioeconomic (X): No variables meet threshold\n")
+  }
+
+  # Important Y variables
+  y_important <- which(abs(loadings_Y[, cv_idx]) >= loading_threshold)
+  if (length(y_important) > 0) {
+    cat("Health (Y) variables:\n")
+    for (idx in y_important) {
+      cat("  ", rownames(loadings_Y)[idx], ": ", round(loadings_Y[idx, cv_idx], 3), "\n", sep = "")
+    }
+  } else {
+    cat("Health (Y): No variables meet threshold\n")
+  }
+  cat("\n")
+}
+
+# Redundancy Analysis
+# Redundancy = (variance in own set explained by own CV) * (shared variance via canonical r^2)
+var_X_U <- colMeans(loadings_X^2)  # Avg variance in X explained by each U
+var_Y_V <- colMeans(loadings_Y^2)  # Avg variance in Y explained by each V
+rd_X_Y <- var_X_U * rho^2  # Variance in X explained by Y's canonical variates
+rd_Y_X <- var_Y_V * rho^2  # Variance in Y explained by X's canonical variates
+
+cat("\n=== REDUNDANCY ANALYSIS ===\n")
+cat("Redundancy = (own variance extracted) × (canonical r²)\n\n")
+cat("Total variance in Socioeconomic (X) explained by Health (Y):", round(sum(rd_X_Y) * 100, 1), "%\n")
+cat("Total variance in Health (Y) explained by Socioeconomic (X):", round(sum(rd_Y_X) * 100, 1), "%\n")
 
 redundancy <- data.frame(CV = paste0("CV", 1:n_cc), r = round(rho, 3), r_sq = round(rho^2, 3),
                          Rd_X_Y = round(rd_X_Y, 3), Rd_Y_X = round(rd_Y_X, 3))

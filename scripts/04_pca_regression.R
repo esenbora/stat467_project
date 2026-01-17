@@ -59,7 +59,11 @@ cat("\nKaiser criterion:", n_kaiser, "components\n")
 cat("70% variance:", n_70var, "components\n")
 cat("80% variance:", n_80var, "components\n")
 
-n_components <- max(n_kaiser, n_70var)
+# Component selection: Use 70% variance as primary criterion
+# Kaiser is reference only (tends to retain too many components)
+n_components <- n_70var
+cat("\nUsing", n_components, "components (70% variance criterion)\n")
+cat("Note: Kaiser suggests", n_kaiser, "(reference only)\n")
 
 # Scree plot
 p_scree <- fviz_eig(pca_result, addlabels = TRUE, ylim = c(0, 50),
@@ -145,10 +149,14 @@ train_control <- trainControl(method = "cv", number = 5)
 
 cv_results <- data.frame(n_PCs = 1:10, RMSE = NA, R2 = NA)
 for (k in 1:10) {
-  formula_k <- as.formula(paste("Life_expectancy ~", paste(paste0("PC", 1:k), collapse = " + ")))
-  model_cv <- train(formula_k, data = pc_data, method = "lm", trControl = train_control)
-  cv_results$RMSE[k] <- model_cv$results$RMSE
-  cv_results$R2[k] <- model_cv$results$Rsquared
+  formula_k <- as.formula(paste("Life_expectancy ~",
+                                paste(paste0("PC", 1:k), collapse = " + ")))
+  model_cv <- train(formula_k, data = pc_data, method = "lm",
+                    trControl = train_control)
+  # CRITICAL FIX: train() returns a single-row results dataframe for "lm" method
+  # Use min/max to ensure scalar extraction (handles edge cases)
+  cv_results$RMSE[k] <- min(model_cv$results$RMSE)
+  cv_results$R2[k] <- max(model_cv$results$Rsquared)
 }
 print(cv_results)
 write.csv(cv_results, "figures/pcr_cv_results.csv", row.names = FALSE)
@@ -169,19 +177,55 @@ vif_vals <- car::vif(std_model)
 cat("Variables with VIF > 5:", sum(vif_vals > 5), "\n")
 
 # Diagnostics
+cat("\n=== REGRESSION DIAGNOSTICS ===\n")
+
+# Shapiro-Wilk test for residual normality
+resid_5pc <- residuals(pcr_m5)
+shapiro_result <- shapiro.test(resid_5pc)
+cat("Shapiro-Wilk test for residual normality:\n")
+cat("  W =", round(shapiro_result$statistic, 4),
+    ", p =", format(shapiro_result$p.value, digits = 3), "\n")
+if (shapiro_result$p.value < 0.05) {
+  cat("  WARNING: Residuals may not be normally distributed (p < 0.05)\n")
+} else {
+  cat("  Residual normality assumption is met\n")
+}
+
+# Breusch-Pagan test for heteroscedasticity (if car package available)
+bp_result <- car::ncvTest(pcr_m5)
+cat("\nBreusch-Pagan test for heteroscedasticity:\n")
+cat("  Chi-sq =", round(bp_result$ChiSquare, 2),
+    ", df =", bp_result$Df,
+    ", p =", format(bp_result$p, digits = 3), "\n")
+if (bp_result$p < 0.05) {
+  cat("  WARNING: Heteroscedasticity detected (p < 0.05)\n")
+} else {
+  cat("  Homoscedasticity assumption is met\n")
+}
+
 p_fitted <- ggplot(pc_data, aes(x = fitted(pcr_m5), y = Life_expectancy)) +
   geom_point(aes(color = Status), alpha = 0.6) +
   geom_abline(intercept = 0, slope = 1, color = "red", linetype = "dashed") +
   scale_color_manual(values = c("#2E86AB", "#E94F37")) +
   labs(title = "Fitted vs Actual (5-PC Model)") + theme_minimal()
 
-p_resid <- ggplot(data.frame(Fitted = fitted(pcr_m5), Residuals = residuals(pcr_m5)),
+p_resid <- ggplot(data.frame(Fitted = fitted(pcr_m5), Residuals = resid_5pc),
                   aes(x = Fitted, y = Residuals)) +
   geom_point(alpha = 0.6, color = "steelblue") +
   geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
+  geom_smooth(method = "loess", se = FALSE, color = "orange", linetype = "dashed") +
   labs(title = "Residual Plot") + theme_minimal()
 
-ggsave("figures/pcr_diagnostics.png", grid.arrange(p_fitted, p_resid, ncol = 2), width = 14, height = 6, dpi = 150)
+# Q-Q plot for residuals
+p_qq <- ggplot(data.frame(Residuals = resid_5pc), aes(sample = Residuals)) +
+  stat_qq(color = "steelblue") +
+  stat_qq_line(color = "red", linetype = "dashed") +
+  labs(title = "Q-Q Plot of Residuals") + theme_minimal()
+
+ggsave("figures/pcr_diagnostics.png",
+       grid.arrange(p_fitted, p_resid, p_qq, ncol = 3),
+       width = 18, height = 6, dpi = 150)
 
 cat("\n=== PCA and PC Regression Complete ===\n")
 cat("Run 05_factor_analysis.R next.\n")
+

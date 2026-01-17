@@ -45,17 +45,38 @@ df_clean <- df_raw %>% filter(!is.na(Life_expectancy))
 cat("After removing missing Life_expectancy:", nrow(df_clean), "rows\n")
 
 # MICE imputation for numeric columns
+# NOTE: Multiple Imputation by Chained Equations (MICE)
+# - m=5: Creates 5 imputed datasets
+# - maxit=10: 10 iterations for convergence
+# - method='pmm': Predictive Mean Matching (preserves distribution)
+#
+# IMPORTANT: We use only the FIRST imputed dataset (complete(mice_model, 1))
+# Proper multiple imputation would require:
+#   1. Running analyses on all m=5 datasets
+#   2. Combining results using Rubin's rules
+# For this educational project, single imputation is used for simplicity.
+# This may underestimate standard errors - interpret CIs with caution.
+
 numeric_cols <- df_clean %>%
   select(where(is.numeric), -Year) %>%
   colnames()
 
 set.seed(123)
 df_for_imputation <- df_clean[, numeric_cols]
-mice_model <- mice(df_for_imputation, m = 5, maxit = 10, method = 'cart',
+
+cat("\n=== MICE IMPUTATION ===\n")
+cat("Method: Predictive Mean Matching (pmm)\n")
+cat("Number of imputations (m):", 5, "\n")
+cat("Max iterations:", 10, "\n")
+
+mice_model <- mice(df_for_imputation, m = 5, maxit = 10, method = 'pmm',
                    seed = 123, printFlag = FALSE)
+
+# Using first imputed dataset (see note above about Rubin's rules)
 df_imputed <- complete(mice_model, 1)
 df_clean[, numeric_cols] <- df_imputed
 
+cat("NOTE: Using single imputed dataset (1 of 5) for simplicity\n")
 cat("Imputation complete. Remaining NA:", sum(is.na(df_clean[, numeric_cols])), "\n")
 
 # Log transformations for skewed variables
