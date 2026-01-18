@@ -8,6 +8,7 @@ library(pROC)
 library(gridExtra)
 library(biotools)  # For Box's M test
 library(MVN)       # For multivariate normality
+library(klaR)      # For partition plots (partimat)
 
 # Fix namespace conflicts
 select <- dplyr::select
@@ -178,6 +179,34 @@ p_2d <- ggplot(df_class, aes(x = Life_expectancy, y = Schooling, color = Status)
   scale_color_manual(values = c("#2E86AB", "#E94F37")) +
   labs(title = "Classification Space") + theme_minimal()
 ggsave("figures/classification_2d.png", p_2d, width = 10, height = 8, dpi = 150)
+
+# Partition plot using klaR::partimat
+# Shows classification boundaries for variable pairs
+cat("\n=== PARTITION PLOTS ===\n")
+cat("Creating LDA partition plots for key variable pairs...\n")
+
+# Select two most important variables for visualization
+top2_vars <- c("Life_expectancy", "Schooling")
+
+png("figures/classification_partition_lda.png", width = 800, height = 700, res = 120)
+partimat(Status ~ Life_expectancy + Schooling,
+         data = df_class, method = "lda",
+         main = "LDA Partition Plot")
+dev.off()
+
+png("figures/classification_partition_qda.png", width = 800, height = 700, res = 120)
+tryCatch({
+  partimat(Status ~ Life_expectancy + Schooling,
+           data = df_class, method = "qda",
+           main = "QDA Partition Plot")
+}, error = function(e) {
+  plot.new()
+  text(0.5, 0.5, "QDA partition plot failed\n(possible singularity)", cex = 1.2)
+})
+dev.off()
+
+cat("Saved: figures/classification_partition_lda.png\n")
+cat("Saved: figures/classification_partition_qda.png\n")
 
 # Misclassified countries (using TEST SET for honest error estimate)
 cat("\n=== MISCLASSIFIED (Test Set) ===\n")
