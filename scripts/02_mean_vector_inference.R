@@ -6,6 +6,8 @@ library(MASS)
 library(Hotelling)
 library(MVN)
 library(ellipse)
+library(rstatix)
+library(heplots)
 
 # Fix namespace conflicts
 select <- dplyr::select
@@ -29,17 +31,35 @@ S <- cov(X)
 cat("=== Sample Mean Vector ===\n")
 print(round(x_bar, 3))
 
-# Multivariate normality
-mvn_result <- MVN::mvn(as.data.frame(X), mvn_test = "mardia")
-cat("\n=== Multivariate Normality (Mardia) ===\n")
-print(mvn_result$multivariateNormality)
+# ============================================================================
+# ASSUMPTION CHECKING FOR HOTELLING'S T²
+# ============================================================================
 
-# Q-Q plot
-mahal_dist <- mahalanobis(X, x_bar, S)
+# 1. MULTIVARIATE NORMALITY (Overall)
+cat("\n=== MULTIVARIATE NORMALITY CHECK ===\n")
+
+# Use Royston test for n < 5000 (recommended by Güler, 2026)
+mvn_royston <- MVN::mvn(as.data.frame(X), mvnTest = "royston")
+cat("Royston's MVN Test (overall):\n")
+print(mvn_royston$multivariateNormality)
+
+# Mardia's test for skewness and kurtosis
+mvn_mardia <- MVN::mvn(as.data.frame(X), mvnTest = "mardia")
+cat("\nMardia's MVN Test (overall):\n")
+print(mvn_mardia$multivariateNormality)
+
+# 2. UNIVARIATE NORMALITY
+cat("\n--- Univariate Normality (Shapiro-Wilk) ---\n")
+univar_df <- as.data.frame(X) %>%
+  pivot_longer(everything(), names_to = "Variable", values_to = "Value") %>%
+  group_by(Variable) %>%
+  shapiro_test(Value)
+univar_df$Normal <- ifelse(univar_df$p > 0.05, "Yes", "No")
+print(univar_df)
+
+# Q-Q plot using MVN package
 png("figures/mean_vector_qq_plot.png", width = 800, height = 600, res = 120)
-qqplot(qchisq(ppoints(n), df = p), mahal_dist,
-       main = "Multivariate Normality Q-Q Plot", xlab = "Chi-squared Quantiles", ylab = "Mahalanobis Distances")
-abline(0, 1, col = "red", lwd = 2)
+plot(mvn_mardia, diagnostic = "multivariate", type = "qq")
 dev.off()
 
 # One-sample Hotelling's T² test
@@ -100,11 +120,15 @@ legend("bottomright", c("Countries", "Sample Mean", "Hypothesized Mean", "95% CR
        col = c("gray50", "red", "darkgreen", "steelblue"), pch = c(19, 19, 4, NA), lty = c(NA, NA, NA, 1), lwd = c(NA, NA, 3, 3))
 dev.off()
 
-# Two-sample Hotelling's T² test
+# ============================================================================
+# TWO-SAMPLE HOTELLING'S T² TEST
+# ============================================================================
 cat("\n=== TWO-SAMPLE HOTELLING'S T² TEST ===\n")
 
-X_dev <- df %>% filter(Status == "Developed") %>% select(all_of(selected_vars)) %>% as.matrix()
-X_devp <- df %>% filter(Status == "Developing") %>% select(all_of(selected_vars)) %>% as.matrix()
+X_dev <- df %>% dplyr::filter(Status == "Developed") %>%
+  dplyr::select(all_of(selected_vars)) %>% as.matrix()
+X_devp <- df %>% dplyr::filter(Status == "Developing") %>%
+  dplyr::select(all_of(selected_vars)) %>% as.matrix()
 
 n1 <- nrow(X_dev)
 n2 <- nrow(X_devp)
@@ -112,9 +136,67 @@ n2 <- nrow(X_devp)
 x_bar1 <- colMeans(X_dev)
 x_bar2 <- colMeans(X_devp)
 
-cat("Mean difference (Developed - Developing):\n")
+cat("Sample sizes: n1 =", n1, ", n2 =", n2, "\n\n")
+
+# ASSUMPTION 1: Multivariate Normality by Group
+cat("--- Assumption 1: MVN by Group ---\n")
+
+# Developed group
+cat("\nDeveloped (n =", n1, "):\n")
+if (n1 >= 7) {
+  mvn_dev <- MVN::mvn(as.data.frame(X_dev), mvnTest = "royston")
+  print(mvn_dev$multivariateNormality)
+} else {
+  cat("Sample too small for MVN test (n < 7). Checking univariate normality:\n")
+  for (v in selected_vars) {
+    sw_test <- shapiro.test(X_dev[, v])
+    cat("  ", v, ": p =", format(sw_test$p.value, digits = 3), "\n")
+  }
+}
+
+# Developing group
+cat("\nDeveloping (n =", n2, "):\n")
+mvn_devp <- MVN::mvn(as.data.frame(X_devp), mvnTest = "royston")
+print(mvn_devp$multivariateNormality)
+
+# Univariate normality by group (using rstatix)
+cat("\n--- Univariate Normality by Group (Shapiro-Wilk) ---\n")
+df_for_test <- df %>%
+  dplyr::select(Status, all_of(selected_vars))
+univar_by_group <- df_for_test %>%
+  pivot_longer(cols = -Status, names_to = "Variable", values_to = "Value") %>%
+  group_by(Status, Variable) %>%
+  shapiro_test(Value)
+univar_by_group$Normal <- ifelse(univar_by_group$p > 0.05, "Yes", "No")
+print(univar_by_group)
+
+# ASSUMPTION 2: Homogeneity of Covariance Matrices (Box's M test)
+cat("\n--- Assumption 2: Box's M Test (Covariance Homogeneity) ---\n")
+X_combined <- rbind(X_dev, X_devp)
+groups <- factor(c(rep("Developed", n1), rep("Developing", n2)))
+box_m <- heplots::boxM(X_combined, groups)
+print(box_m)
+
+if (is.infinite(box_m$statistic) || is.na(box_m$p.value)) {
+  cat("\nBox's M test returned Inf/NA - possible singularity issue\n")
+  cat("Using pooled covariance anyway, but interpret with caution\n")
+  use_pooled <- TRUE
+} else if (box_m$p.value < 0.05) {
+  cat("\nBox's M significant (p < 0.05): Covariance matrices are NOT equal\n")
+  cat("WARNING: Pooled covariance assumption violated!\n")
+  cat("Consider: Nel-Van der Merwe test or separate covariances\n")
+  cat("Proceeding with pooled Sp but results should be interpreted cautiously\n")
+  use_pooled <- FALSE
+} else {
+  cat("\nBox's M not significant (p >= 0.05): Covariance matrices are equal\n")
+  cat("Pooled covariance matrix (Sp) is appropriate\n")
+  use_pooled <- TRUE
+}
+
+cat("\nMean difference (Developed - Developing):\n")
 print(round(x_bar1 - x_bar2, 3))
 
+# Pooled covariance matrix
 Sp <- ((n1-1)*cov(X_dev) + (n2-1)*cov(X_devp)) / (n1 + n2 - 2)
 diff_means <- x_bar1 - x_bar2
 T2_two <- (n1*n2/(n1+n2)) * t(diff_means) %*% solve(Sp) %*% diff_means

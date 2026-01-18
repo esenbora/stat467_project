@@ -7,6 +7,8 @@ library(car)
 library(biotools)
 library(MVN)
 library(ggpubr)
+library(rstatix)
+library(heplots)
 
 # Fix namespace conflicts
 select <- dplyr::select
@@ -50,38 +52,91 @@ if (length(outliers) > 0 && length(outliers) <= 10) {
 cat("\n")
 
 # Multivariate normality by group
-cat("--- Multivariate Normality (Mardia) ---\n")
+# Using Royston test (recommended for n < 5000, based on Shapiro-Wilk)
+cat("--- Multivariate Normality by Group ---\n")
+cat("Test selection: Royston (extension of Shapiro-Wilk, appropriate for n < 5000)\n")
+
+mvn_by_group <- data.frame(Group = character(), Test = character(),
+                            Statistic = numeric(), p_value = character(),
+                            MVN = character(), stringsAsFactors = FALSE)
+
 for (grp in levels(df_manova$Status)) {
-  cat("\n", grp, ":\n", sep = "")
-  grp_data <- df_manova %>% filter(Status == grp) %>% select(all_of(dv_vars))
+  cat("\n", grp, " (n = ", sum(df_manova$Status == grp), "):\n", sep = "")
+  grp_data <- df_manova %>% dplyr::filter(Status == grp) %>%
+    dplyr::select(all_of(dv_vars))
+
   tryCatch({
-    mvn_result <- MVN::mvn(grp_data, mvn = "mardia")
-    print(mvn_result$multivariate_normality)
+    # Use Royston test
+    mvn_royston <- MVN::mvn(grp_data, mvnTest = "royston")
+    print(mvn_royston$multivariateNormality)
+
+    mvn_by_group <- rbind(mvn_by_group, data.frame(
+      Group = grp,
+      Test = "Royston",
+      Statistic = as.numeric(mvn_royston$multivariateNormality$Statistic),
+      p_value = mvn_royston$multivariateNormality$`p value`,
+      MVN = mvn_royston$multivariateNormality$MVN
+    ))
   }, error = function(e) {
-    cat("MVN test failed: ", conditionMessage(e), "\n")
-    cat("(Likely due to singular covariance matrix with small sample size)\n")
+    cat("Royston test failed:", conditionMessage(e), "\n")
+    cat("Trying Mardia test...\n")
+    tryCatch({
+      mvn_mardia <- MVN::mvn(grp_data, mvnTest = "mardia")
+      print(mvn_mardia$multivariateNormality)
+    }, error = function(e2) {
+      cat("MVN test failed:", conditionMessage(e2), "\n")
+    })
   })
+}
+
+# Univariate normality by group (Shapiro-Wilk)
+cat("\n--- Univariate Normality by Group (Shapiro-Wilk) ---\n")
+df_for_sw <- df_manova %>%
+  dplyr::select(Status, all_of(dv_vars))
+univar_by_group <- df_for_sw %>%
+  pivot_longer(cols = -Status, names_to = "Variable", values_to = "Value") %>%
+  group_by(Status, Variable) %>%
+  shapiro_test(Value)
+univar_by_group$Normal <- ifelse(univar_by_group$p > 0.05, "Yes", "No")
+
+# Count violations
+violations <- univar_by_group %>%
+  dplyr::filter(p < 0.05) %>%
+  dplyr::select(Status, Variable, p)
+if (nrow(violations) > 0) {
+  cat("Variables violating univariate normality (p < 0.05):\n")
+  print(violations)
+} else {
+  cat("All variables satisfy univariate normality in both groups\n")
 }
 cat("\n")
 
-# Box's M test
+# Box's M test for homogeneity of covariance matrices
+cat("--- Box's M Test (Covariance Homogeneity) ---\n")
 X_matrix <- as.matrix(df_manova[, dv_vars])
-box_m <- biotools::boxM(X_matrix, df_manova$Status)
+
+# Using heplots::boxM for better output
+box_m <- heplots::boxM(X_matrix, df_manova$Status)
 print(box_m)
 
 cat("\n--- Box's M Interpretation ---\n")
 if (is.infinite(box_m$statistic) || is.na(box_m$p.value)) {
   cat("Box's M test returned Inf or NA - possible singularity in covariance matrix\n")
   cat("This can occur with near-collinear variables or small group sizes\n")
-  cat("Recommendation: Use Pillai's Trace (most robust to violations)\n\n")
+  cat("Recommendation: Use Pillai's Trace (most robust to violations)\n")
+  use_pillai <- TRUE
 } else if (box_m$p.value < 0.05) {
   cat("Box's M significant (p < 0.05)\n")
   cat("Covariance matrices are NOT equal across groups\n")
-  cat("Recommendation: Use Pillai's Trace (most robust to violations)\n\n")
+  cat("Recommendation: Use Pillai's Trace (most robust to violations)\n")
+  use_pillai <- TRUE
 } else {
   cat("Box's M not significant (p >= 0.05)\n")
-  cat("Homogeneity of covariance matrices assumption is met\n\n")
+  cat("Homogeneity of covariance matrices assumption is met\n")
+  cat("All test statistics are appropriate\n")
+  use_pillai <- FALSE
 }
+cat("\n")
 
 # Descriptives
 cat("=== GROUP MEANS ===\n")

@@ -7,6 +7,7 @@ library(ggcorrplot)
 library(GGally)
 library(gridExtra)
 library(MVN)
+library(rstatix)  # For univariate normality tests
 
 df <- read.csv("data_country_level.csv", stringsAsFactors = FALSE)
 df$Status <- as.factor(df$Status)
@@ -63,7 +64,7 @@ selected_vars <- c("Life_expectancy", "Adult_Mortality", "Schooling", "GDP_log",
 p_list <- lapply(selected_vars, function(var) {
   ggplot(df, aes_string(x = "Status", y = var, fill = "Status")) +
     geom_boxplot(alpha = 0.7) +
-    geom_jitter(width = 0.2, alpha = 0.3, size = 1) +
+    geom_jitter(width = 0.2 , alpha = 0.3, size = 1) +
     scale_fill_manual(values = c("Developed" = "#2E86AB", "Developing" = "#E94F37")) +
     labs(title = var) +
     theme_minimal() +
@@ -106,19 +107,124 @@ p_pairs <- ggpairs(df, columns = pairs_vars, mapping = aes(color = Status, alpha
   theme_minimal()
 ggsave("figures/pairs_plot.png", p_pairs, width = 14, height = 12, dpi = 150)
 
-# Multivariate normality check
-norm_vars <- c("Life_expectancy", "Adult_Mortality", "Schooling", "GDP_log", "Income_composition", "BMI", "HIV_AIDS")
-mvn_result <- MVN::mvn(df[, norm_vars], mvn_test = "mardia")
-cat("\n=== Multivariate Normality (Mardia) ===\n")
-print(mvn_result$multivariateNormality)
+# ============================================================================
+# MULTIVARIATE NORMALITY ASSESSMENT (Following MVN Package Guidelines)
+# ============================================================================
+norm_vars <- c("Life_expectancy", "Adult_Mortality", "Schooling", "GDP_log",
+               "Income_composition", "BMI", "HIV_AIDS")
+X_norm <- df[, norm_vars]
+n <- nrow(X_norm)
 
-# Q-Q plot
-mahal_dist <- mahalanobis(df[, norm_vars], colMeans(df[, norm_vars]), cov(df[, norm_vars]))
-png("figures/mvn_qq_plot.png", width = 800, height = 600, res = 120)
-qqplot(qchisq(ppoints(nrow(df)), df = length(norm_vars)), mahal_dist,
-       main = "Q-Q Plot: Mahalanobis Distances", xlab = "Chi-squared Quantiles", ylab = "Mahalanobis Distances")
-abline(0, 1, col = "red", lwd = 2)
+cat("\n=== MULTIVARIATE NORMALITY ASSESSMENT ===\n")
+cat("Variables:", paste(norm_vars, collapse = ", "), "\n")
+cat("Sample size: n =", n, "\n\n")
+
+# 1. UNIVARIATE NORMALITY TESTS (Shapiro-Wilk)
+cat("--- 1. Univariate Normality (Shapiro-Wilk) ---\n")
+univar_results <- X_norm %>%
+  pivot_longer(everything(), names_to = "Variable", values_to = "Value") %>%
+  group_by(Variable) %>%
+  shapiro_test(Value)
+univar_results$Normal <- ifelse(univar_results$p > 0.05, "Yes", "No")
+print(univar_results)
+
+# Count violations
+n_violations <- sum(univar_results$p < 0.05)
+cat("\nUnivariate normality violations:", n_violations, "of", length(norm_vars), "variables\n")
+
+# Univariate histograms
+png("figures/eda_univariate_histograms.png", width = 1200, height = 800, res = 120)
+mvn_univ <- mvn(X_norm, univariatePlot = "histogram")
 dev.off()
+
+# 2. MULTIVARIATE NORMALITY TESTS
+# Test selection based on sample size (Güler, 2026 recommendations):
+# - Mardia: n < 20
+# - Royston: n < 5000 (based on Shapiro-Wilk)
+# - Henze-Zirkler: Any sample size
+
+cat("\n--- 2. Multivariate Normality Tests ---\n")
+
+# Mardia's test (skewness and kurtosis)
+mvn_mardia <- mvn(X_norm, mvnTest = "mardia")
+cat("\nMardia's Test:\n")
+print(mvn_mardia$multivariateNormality)
+
+# Royston's test (extension of Shapiro-Wilk)
+mvn_royston <- mvn(X_norm, mvnTest = "royston")
+cat("\nRoyston's Test:\n")
+print(mvn_royston$multivariateNormality)
+
+# Henze-Zirkler test (no sample size limitation)
+mvn_hz <- mvn(X_norm, mvnTest = "hz")
+cat("\nHenze-Zirkler Test:\n")
+print(mvn_hz$multivariateNormality)
+
+# Summary
+cat("\n--- MVN Test Summary ---\n")
+mvn_summary <- data.frame(
+  Test = c("Mardia Skewness", "Mardia Kurtosis", "Royston", "Henze-Zirkler"),
+  p_value = c(
+    mvn_mardia$multivariateNormality$`p value`[1],
+    mvn_mardia$multivariateNormality$`p value`[2],
+    mvn_royston$multivariateNormality$`p value`,
+    mvn_hz$multivariateNormality$`p value`
+  )
+)
+mvn_summary$Conclusion <- ifelse(as.numeric(mvn_summary$p_value) < 0.05,
+                                  "Reject MVN", "Fail to reject MVN")
+print(mvn_summary)
+
+# 3. CHI-SQUARE Q-Q PLOT
+cat("\n--- 3. Chi-Square Q-Q Plot ---\n")
+png("figures/mvn_qq_plot.png", width = 800, height = 600, res = 120)
+result_qq <- mvn(X_norm, mvnTest = "mardia")
+plot(result_qq, diagnostic = "multivariate", type = "qq")
+dev.off()
+cat("Saved: figures/mvn_qq_plot.png\n")
+
+# 4. MULTIVARIATE OUTLIER DETECTION
+cat("\n--- 4. Multivariate Outlier Detection ---\n")
+
+# Mahalanobis distance based outliers
+mvn_outlier_mah <- mvn(X_norm, mvnTest = "mardia",
+                       multivariateOutlierMethod = "quan")
+n_outliers_mah <- sum(mvn_outlier_mah$multivariateOutliers$Outlier == "TRUE",
+                      na.rm = TRUE)
+cat("Outliers (Mahalanobis distance, alpha = 0.025):", n_outliers_mah, "\n")
+
+# Adjusted Mahalanobis distance
+mvn_outlier_adj <- mvn(X_norm, mvnTest = "mardia",
+                       multivariateOutlierMethod = "adj")
+n_outliers_adj <- sum(mvn_outlier_adj$multivariateOutliers$Outlier == "TRUE",
+                      na.rm = TRUE)
+cat("Outliers (Adjusted Mahalanobis):", n_outliers_adj, "\n")
+
+# Save outlier plot
+png("figures/mvn_outlier_detection.png", width = 900, height = 600, res = 120)
+plot(mvn_outlier_mah, diagnostic = "outlier")
+dev.off()
+cat("Saved: figures/mvn_outlier_detection.png\n")
+
+# List outlier countries
+if (n_outliers_mah > 0) {
+  outlier_indices <- which(mvn_outlier_mah$multivariateOutliers$Outlier == "TRUE")
+  cat("\nOutlier countries (Mahalanobis):\n")
+  print(df$Country[outlier_indices])
+}
+
+# 5. IMPLICATIONS FOR DOWNSTREAM ANALYSES
+cat("\n--- 5. Implications for Downstream Analyses ---\n")
+if (any(as.numeric(mvn_summary$p_value) < 0.05)) {
+  cat("WARNING: MVN assumption violated.\n")
+  cat("Recommendations:\n")
+  cat("  - Use robust methods where available\n")
+  cat("  - Consider transformations for skewed variables\n")
+  cat("  - Interpret parametric tests with caution\n")
+  cat("  - Large sample size (n=", n, ") provides some robustness\n")
+} else {
+  cat("MVN assumption satisfied - parametric methods appropriate\n")
+}
 
 cat("\n=== EDA Complete ===\n")
 cat("Figures saved. Run 02_mean_vector_inference.R next.\n")
