@@ -1,0 +1,255 @@
+── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
+✔ dplyr     1.1.4     ✔ readr     2.1.6
+✔ forcats   1.0.1     ✔ stringr   1.6.0
+✔ ggplot2   4.0.1     ✔ tibble    3.3.1
+✔ lubridate 1.9.4     ✔ tidyr     1.3.2
+✔ purrr     1.2.0     
+── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter() masks stats::filter()
+✖ dplyr::lag()    masks stats::lag()
+ℹ Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors
+Warning messages:
+1: package ‘ggplot2’ was built under R version 4.5.2 
+2: package ‘tibble’ was built under R version 4.5.2 
+3: package ‘tidyr’ was built under R version 4.5.2 
+4: package ‘readr’ was built under R version 4.5.2 
+
+Attaching package: ‘psych’
+
+The following objects are masked from ‘package:ggplot2’:
+
+    %+%, alpha
+
+
+Attaching package: ‘GPArotation’
+
+The following objects are masked from ‘package:psych’:
+
+    equamax, varimin
+
+corrplot 0.95 loaded
+
+Attaching package: ‘gridExtra’
+
+The following object is masked from ‘package:dplyr’:
+
+    combine
+
+Data: 183 countries
+
+Variables: 15 , Obs: 183 
+
+=== KMO ===
+Overall MSA: 0.833 
+
+=== Bartlett's Test ===
+Chi-sq: 3616.36 , df: 105 , p: 0e+00 
+
+Kaiser criterion: 4 factors
+
+=== Parallel Analysis ===
+Parallel analysis suggests that the number of factors =  4  and the number of components =  NA 
+null device 
+          1 
+Parallel analysis suggests: 4 factors
+Using 4 factors (from parallel analysis)
+
+=== MVN CHECK FOR EXTRACTION METHOD ===
+MVN assumption violated - using Principal Axis (PA) extraction (robust)
+
+=== FA WITH VARIMAX ===
+Factor Analysis using method =  pa
+Call: fa(r = X_fa, nfactors = n_factors, rotate = "varimax", scores = "regression", 
+    fm = fm_method)
+Standardized loadings (pattern matrix) based upon correlation matrix
+                     item   PA1   PA3   PA2   PA4   h2    u2 com
+Alcohol                 3  0.73                   0.57 0.435 1.1
+thinness_10_19_years   11 -0.73        0.50       0.82 0.177 2.0
+Schooling              14  0.73  0.46             0.81 0.192 2.0
+thinness_5_9_years     12 -0.72        0.51       0.82 0.182 2.0
+BMI                     5  0.69             -0.38 0.72 0.281 2.1
+GDP_log                15  0.68  0.38       -0.31 0.71 0.290 2.0
+Income_composition     13  0.67  0.44       -0.35 0.76 0.237 2.3
+Total_expenditure       8  0.47                   0.24 0.760 1.2
+Diphtheria              9        0.90             0.93 0.075 1.3
+Polio                   7        0.90             0.92 0.078 1.3
+Hepatitis_B             4        0.81             0.76 0.237 1.3
+infant_deaths           2              0.94       0.92 0.077 1.1
+under_five_deaths       6              0.94       0.92 0.076 1.1
+Adult_Mortality         1 -0.34 -0.31        0.85 0.94 0.064 1.6
+HIV_AIDS               10                    0.75 0.57 0.426 1.0
+
+                       PA1  PA3  PA2  PA4
+SS loadings           4.03 3.09 2.41 1.87
+Proportion Var        0.27 0.21 0.16 0.12
+Cumulative Var        0.27 0.48 0.64 0.76
+Proportion Explained  0.35 0.27 0.21 0.16
+Cumulative Proportion 0.35 0.62 0.84 1.00
+
+Mean item complexity =  1.6
+Test of the hypothesis that 4 factors are sufficient.
+
+df null model =  105  with the objective function =  20.53 with Chi Square =  3616.36
+df of  the model are 51  and the objective function was  6.06 
+
+The root mean square of the residuals (RMSR) is  0.04 
+The df corrected root mean square of the residuals is  0.06 
+
+The harmonic n.obs is  183 with the empirical chi square  59.42  with prob <  0.2 
+The total n.obs was  183  with Likelihood Chi Square =  1051.81  with prob <  6.2e-187 
+
+Tucker Lewis Index of factoring reliability =  0.404
+RMSEA index =  0.327  and the 90 % confidence intervals are  0.311 0.346
+BIC =  786.13
+Fit based upon off diagonal values = 0.99
+Measures of factor score adequacy             
+                                                   PA1  PA3  PA2  PA4
+Correlation of (regression) scores with factors   0.95 0.97 0.98 0.95
+Multiple R square of scores with factors          0.90 0.95 0.95 0.90
+Minimum correlation of possible factor scores     0.79 0.90 0.90 0.81
+
+=== FA WITH PROMAX ===
+Factor Analysis using method =  pa
+Call: fa(r = X_fa, nfactors = n_factors, rotate = "promax", scores = "regression", 
+    fm = fm_method)
+Standardized loadings (pattern matrix) based upon correlation matrix
+                     item   PA1   PA3   PA2   PA4   h2    u2 com
+Alcohol                 3  0.87                   0.57 0.435 1.2
+thinness_10_19_years   11 -0.75        0.38       0.82 0.177 1.7
+thinness_5_9_years     12 -0.74        0.39       0.82 0.182 1.7
+Schooling              14  0.71                   0.81 0.192 1.4
+GDP_log                15  0.66                   0.71 0.290 1.3
+BMI                     5  0.65                   0.72 0.281 1.3
+Income_composition     13  0.63                   0.76 0.237 1.6
+Total_expenditure       8  0.57                   0.24 0.760 1.2
+Diphtheria              9        0.95             0.93 0.075 1.0
+Polio                   7        0.93             0.92 0.078 1.0
+Hepatitis_B             4        0.87             0.76 0.237 1.1
+infant_deaths           2              0.96       0.92 0.077 1.1
+under_five_deaths       6              0.95       0.92 0.076 1.1
+Adult_Mortality         1                    0.89 0.94 0.064 1.0
+HIV_AIDS               10                    0.88 0.57 0.426 1.1
+
+                       PA1  PA3  PA2  PA4
+SS loadings           4.26 2.97 2.32 1.86
+Proportion Var        0.28 0.20 0.15 0.12
+Cumulative Var        0.28 0.48 0.64 0.76
+Proportion Explained  0.37 0.26 0.20 0.16
+Cumulative Proportion 0.37 0.63 0.84 1.00
+
+ With factor correlations of 
+      PA1   PA3   PA2   PA4
+PA1  1.00  0.53 -0.34 -0.54
+PA3  0.53  1.00 -0.14 -0.49
+PA2 -0.34 -0.14  1.00  0.13
+PA4 -0.54 -0.49  0.13  1.00
+
+Mean item complexity =  1.3
+Test of the hypothesis that 4 factors are sufficient.
+
+df null model =  105  with the objective function =  20.53 with Chi Square =  3616.36
+df of  the model are 51  and the objective function was  6.06 
+
+The root mean square of the residuals (RMSR) is  0.04 
+The df corrected root mean square of the residuals is  0.06 
+
+The harmonic n.obs is  183 with the empirical chi square  59.42  with prob <  0.2 
+The total n.obs was  183  with Likelihood Chi Square =  1051.81  with prob <  6.2e-187 
+
+Tucker Lewis Index of factoring reliability =  0.404
+RMSEA index =  0.327  and the 90 % confidence intervals are  0.311 0.346
+BIC =  786.13
+Fit based upon off diagonal values = 0.99
+Measures of factor score adequacy             
+                                                   PA1  PA3  PA2  PA4
+Correlation of (regression) scores with factors   0.97 0.98 0.98 0.97
+Multiple R square of scores with factors          0.94 0.97 0.96 0.94
+Minimum correlation of possible factor scores     0.89 0.93 0.92 0.88
+
+=== LOADINGS ===
+                                 Variable     F1     F2     F3     F4
+Adult_Mortality           Adult_Mortality -0.345 -0.311  0.006  0.849
+infant_deaths               infant_deaths -0.123 -0.155  0.940 -0.012
+Alcohol                           Alcohol  0.729  0.185  0.015 -0.003
+Hepatitis_B                   Hepatitis_B  0.164  0.810 -0.249 -0.133
+BMI                                   BMI  0.686  0.251 -0.203 -0.379
+under_five_deaths       under_five_deaths -0.123 -0.180  0.936  0.004
+Polio                               Polio  0.273  0.897 -0.107 -0.178
+Total_expenditure       Total_expenditure  0.467  0.084 -0.107  0.055
+Diphtheria                     Diphtheria  0.267  0.905 -0.102 -0.159
+HIV_AIDS                         HIV_AIDS -0.041 -0.103  0.024  0.749
+thinness_10_19_years thinness_10_19_years -0.727 -0.041  0.503  0.200
+thinness_5_9_years     thinness_5_9_years -0.718 -0.034  0.510  0.203
+Income_composition     Income_composition  0.671  0.437 -0.002 -0.348
+Schooling                       Schooling  0.726  0.458 -0.028 -0.264
+GDP_log                           GDP_log  0.684  0.380 -0.034 -0.312
+                     Communality
+Adult_Mortality            0.936
+infant_deaths              0.923
+Alcohol                    0.565
+Hepatitis_B                0.763
+BMI                        0.719
+under_five_deaths          0.924
+Polio                      0.922
+Total_expenditure          0.240
+Diphtheria                 0.925
+HIV_AIDS                   0.574
+thinness_10_19_years       0.823
+thinness_5_9_years         0.818
+Income_composition         0.763
+Schooling                  0.808
+GDP_log                    0.710
+
+=== COMMUNALITY CHECK ===
+WARNING: Variables with low communality (< 0.4):
+  Total_expenditure: 0.24
+Consider removing these variables or using more factors
+
+=== FACTOR INTERPRETATION ===
+F1: Economic Development (GDP, Schooling, Income)
+F2: Healthcare Access (Diphtheria, Polio, Hep B)
+F3: Mortality Burden (Adult/infant/under-5 deaths)
+F4: Nutritional Status (BMI, thinness, Alcohol)
+
+=== FACTOR CORRELATIONS (Promax) ===
+       PA1    PA3    PA2    PA4
+PA1  1.000  0.528 -0.337 -0.537
+PA3  0.528  1.000 -0.143 -0.494
+PA2 -0.337 -0.143  1.000  0.135
+PA4 -0.537 -0.494  0.135  1.000
+null device 
+          1 
+
+=== FACTOR SCORE MEANS BY STATUS ===
+# A tibble: 2 × 5
+  Status         F1     F2     F3     F4
+  <fct>       <dbl>  <dbl>  <dbl>  <dbl>
+1 Developed   1.19   0.387  0.014 -0.365
+2 Developing -0.252 -0.082 -0.003  0.077
+
+=== MODEL FIT ===
+TLI: 0.404 (Poor, < 0.90 - consider more/fewer factors)
+RMSEA: 0.327 (Mediocre/Poor, > 0.08)
+BIC: 786.13 (lower is better)
+
+=== FACTOR MODEL COMPARISON ===
+Comparing alternative model specifications to improve fit
+
+Model A: Removed Total_expenditure (lowest communality)
+Model B: Using 5 factors (increased from 4 )
+
+=== MODEL COMPARISON TABLE ===
+                        Model Variables Factors   TLI RMSEA   BIC
+1 A: Remove Total_expenditure        14       4 0.353 0.364 821.1
+2                B: 5 factors        15       5 0.939 0.104 -88.4
+3     C: Original (4 factors)        15       4 0.404 0.327 786.1
+
+Best TLI: B: 5 factors = 0.939 
+Best RMSEA: B: 5 factors = 0.104 
+Best BIC: B: 5 factors = -88.4 
+
+--- RECOMMENDATION ---
+Model B: 5 factors achieves acceptable fit (TLI >= 0.90)
+
+=== Factor Analysis Complete ===
+Run 06_classification.R next.

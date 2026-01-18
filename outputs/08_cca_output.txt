@@ -1,0 +1,207 @@
+── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
+✔ dplyr     1.1.4     ✔ readr     2.1.6
+✔ forcats   1.0.1     ✔ stringr   1.6.0
+✔ ggplot2   4.0.1     ✔ tibble    3.3.1
+✔ lubridate 1.9.4     ✔ tidyr     1.3.2
+✔ purrr     1.2.0     
+── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter() masks stats::filter()
+✖ dplyr::lag()    masks stats::lag()
+ℹ Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors
+Warning messages:
+1: package ‘ggplot2’ was built under R version 4.5.2 
+2: package ‘tibble’ was built under R version 4.5.2 
+3: package ‘tidyr’ was built under R version 4.5.2 
+4: package ‘readr’ was built under R version 4.5.2 
+Loading required package: fda
+Loading required package: splines
+Loading required package: fds
+Loading required package: rainbow
+Loading required package: MASS
+
+Attaching package: ‘MASS’
+
+The following object is masked from ‘package:dplyr’:
+
+    select
+
+Loading required package: pcaPP
+Loading required package: RCurl
+
+Attaching package: ‘RCurl’
+
+The following object is masked from ‘package:tidyr’:
+
+    complete
+
+Loading required package: deSolve
+
+Attaching package: ‘fda’
+
+The following object is masked from ‘package:graphics’:
+
+    matplot
+
+The following object is masked from ‘package:datasets’:
+
+    gait
+
+Loading required package: fields
+Loading required package: spam
+Spam version 2.11-3 (2026-01-05) is loaded.
+Type 'help( Spam)' or 'demo( spam)' for a short introduction 
+and overview of this package.
+Help for individual functions is also obtained by adding the
+suffix '.spam' to the function name, e.g. 'help( chol.spam)'.
+
+Attaching package: ‘spam’
+
+The following objects are masked from ‘package:base’:
+
+    backsolve, forwardsolve
+
+Loading required package: viridisLite
+Loading required package: RColorBrewer
+
+Try help(fields) to get started.
+Warning message:
+package ‘spam’ was built under R version 4.5.2 
+corrplot 0.95 loaded
+
+Attaching package: ‘gridExtra’
+
+The following object is masked from ‘package:dplyr’:
+
+    combine
+
+Data: 183 countries
+
+Set X (Socioeconomic): GDP_log, Schooling, Income_composition, Total_expenditure, Alcohol 
+Set Y (Health): Life_expectancy, Adult_Mortality, infant_deaths, HIV_AIDS, BMI 
+Complete cases: 183 
+
+=== CROSS-CORRELATIONS ===
+                   Life_expectancy Adult_Mortality infant_deaths HIV_AIDS   BMI
+GDP_log                      0.790          -0.642        -0.213   -0.263 0.693
+Schooling                    0.808          -0.633        -0.228   -0.251 0.724
+Income_composition           0.830          -0.674        -0.188   -0.305 0.690
+Total_expenditure            0.279          -0.178        -0.167    0.014 0.386
+Alcohol                      0.474          -0.298        -0.125   -0.096 0.463
+null device 
+          1 
+
+=== CCA ===
+   CV      r   r_sq
+1 CV1 0.9222 0.8505
+2 CV2 0.2951 0.0871
+3 CV3 0.2329 0.0543
+4 CV4 0.0245 0.0006
+5 CV5 0.0061 0.0000
+
+=== SIGNIFICANCE ===
+Wilks' Lambda, using F-approximation (Rao's F):
+              stat      approx df1      df2    p.value
+1 to 5:  0.1289862 18.95236868  25 644.1684 0.00000000
+2 to 5:  0.8628489  1.64556689  16 532.2164 0.05354857
+3 to 5:  0.9451383  1.11034285   9 426.0546 0.35385473
+4 to 5:  0.9993623  0.02807401   4 352.0000 0.99847349
+5 to 5:  0.9999625  0.00663607   1 177.0000 0.93516653
+$id
+[1] "Wilks"
+
+$stat
+[1] 0.1289862 0.8628489 0.9451383 0.9993623 0.9999625
+
+$approx
+[1] 18.95236868  1.64556689  1.11034285  0.02807401  0.00663607
+
+$df1
+[1] 25 16  9  4  1
+
+$df2
+[1] 644.1684 532.2164 426.0546 352.0000 177.0000
+
+$p.value
+[1] 0.00000000 0.05354857 0.35385473 0.99847349 0.93516653
+
+
+Overall Wilks: 0.129 , Chi-sq: 361.48 , p: 0e+00 
+
+=== SEQUENTIAL DIMENSION TESTS ===
+Testing significance of each canonical correlation:
+
+   CV      r   r_sq Wilks_Lambda Chi_sq df    p_value Significant
+1 CV1 0.9222 0.8505       0.1290 361.48 25 0.00000000           *
+2 CV2 0.2951 0.0871       0.8628  26.04 16 0.05351647            
+3 CV3 0.2329 0.0543       0.9451   9.96  9 0.35382785            
+4 CV4 0.0245 0.0006       0.9994   0.11  4 0.99847348            
+5 CV5 0.0061 0.0000       1.0000   0.01  1 0.93516666            
+
+Number of significant canonical correlations (alpha=0.05): 1 out of 5 
+
+=== COEFFICIENTS ===
+X coefficients:
+                       CV1     CV2     CV3     CV4     CV5
+GDP_log            -0.4060  0.1731  0.9425 -0.1283  1.5336
+Schooling          -0.3990 -0.6019  0.3014  2.0643 -0.6372
+Income_composition -0.3079  1.0811 -0.7747 -1.5805 -0.9380
+Total_expenditure  -0.1377 -0.5394  0.6927 -0.6411 -0.3012
+Alcohol             0.1523 -0.6529 -1.1764 -0.1595  0.3470
+
+Y coefficients:
+                    CV1     CV2     CV3     CV4     CV5
+Life_expectancy -1.0424 -0.2471 -2.1314  0.8827  0.5156
+Adult_Mortality -0.1204 -1.2783 -2.1387  0.4000 -0.5885
+infant_deaths   -0.0017  0.0507 -0.4731 -0.8940  0.3107
+HIV_AIDS        -0.3047 -0.1419  0.5772  0.1082  1.2462
+BMI             -0.2510 -0.9265  0.5195 -0.8705 -0.5608
+
+=== LOADINGS ===
+X on U:
+                       U1     U2     U3     U4     U5
+GDP_log            -0.910  0.034 -0.011 -0.038  0.411
+Schooling          -0.944 -0.128 -0.125  0.240 -0.139
+Income_composition -0.937  0.172 -0.237 -0.137 -0.133
+Total_expenditure  -0.401 -0.708  0.321 -0.410 -0.258
+Alcohol            -0.591 -0.535 -0.546 -0.120  0.229
+
+Y on V:
+                    V1     V2     V3     V4     V5
+Life_expectancy -0.938  0.299 -0.081  0.006 -0.158
+Adult_Mortality  0.759 -0.570 -0.198  0.141  0.200
+infant_deaths    0.259  0.235 -0.394 -0.779  0.340
+HIV_AIDS         0.308 -0.574  0.151  0.141  0.730
+BMI             -0.830 -0.272  0.250 -0.260 -0.327
+
+=== LOADING INTERPRETATION ===
+Variables with |loading| >= 0.4 are considered important contributors
+
+--- CV 1 (r = 0.922 ) ---
+Socioeconomic (X) variables:
+  GDP_log: -0.91
+  Schooling: -0.944
+  Income_composition: -0.937
+  Total_expenditure: -0.401
+  Alcohol: -0.591
+Health (Y) variables:
+  Life_expectancy: -0.938
+  Adult_Mortality: 0.759
+  BMI: -0.83
+
+
+=== REDUNDANCY ANALYSIS ===
+Redundancy = (own variance extracted) × (canonical r²)
+
+Total variance in Socioeconomic (X) explained by Health (Y): 54.8 %
+Total variance in Health (Y) explained by Socioeconomic (X): 41.1 %
+    CV     r  r_sq Rd_X_Y Rd_Y_X
+U1 CV1 0.922 0.851  0.529  0.392
+U2 CV2 0.295 0.087  0.015  0.015
+U3 CV3 0.233 0.054  0.005  0.003
+U4 CV4 0.025 0.001  0.000  0.000
+U5 CV5 0.006 0.000  0.000  0.000
+`geom_smooth()` using formula = 'y ~ x'
+`geom_smooth()` using formula = 'y ~ x'
+
+=== CCA Complete ===
+All 8 methods implemented!

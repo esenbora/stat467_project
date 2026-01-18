@@ -1,0 +1,230 @@
+── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
+✔ dplyr     1.1.4     ✔ readr     2.1.6
+✔ forcats   1.0.1     ✔ stringr   1.6.0
+✔ ggplot2   4.0.1     ✔ tibble    3.3.1
+✔ lubridate 1.9.4     ✔ tidyr     1.3.2
+✔ purrr     1.2.0     
+── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter() masks stats::filter()
+✖ dplyr::lag()    masks stats::lag()
+ℹ Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors
+Warning messages:
+1: package ‘ggplot2’ was built under R version 4.5.2 
+2: package ‘tibble’ was built under R version 4.5.2 
+3: package ‘tidyr’ was built under R version 4.5.2 
+4: package ‘readr’ was built under R version 4.5.2 
+Warning message:
+package ‘FactoMineR’ was built under R version 4.5.2 
+Welcome! Want to learn more? See two factoextra-related books at https://goo.gl/ve3WBa
+corrplot 0.95 loaded
+
+Attaching package: ‘gridExtra’
+
+The following object is masked from ‘package:dplyr’:
+
+    combine
+
+Loading required package: lattice
+
+Attaching package: ‘caret’
+
+The following object is masked from ‘package:purrr’:
+
+    lift
+
+Loading required package: carData
+
+Attaching package: ‘car’
+
+The following object is masked from ‘package:dplyr’:
+
+    recode
+
+The following object is masked from ‘package:purrr’:
+
+    some
+
+
+Attaching package: ‘psych’
+
+The following object is masked from ‘package:car’:
+
+    logit
+
+The following objects are masked from ‘package:ggplot2’:
+
+    %+%, alpha
+
+Data: 183 countries
+
+Variables: 16 
+Complete obs: 183 
+
+KMO: 0.831 
+Bartlett p-value: 0e+00 
+
+=== EIGENVALUES ===
+     PC Eigenvalue Var_Pct Cum_Pct
+1   PC1     7.3201   45.75   45.75
+2   PC2     2.2984   14.37   60.12
+3   PC3     1.6538   10.34   70.45
+4   PC4     1.2718    7.95   78.40
+5   PC5     0.7966    4.98   83.38
+6   PC6     0.7340    4.59   87.97
+7   PC7     0.5967    3.73   91.70
+8   PC8     0.4641    2.90   94.60
+9   PC9     0.2129    1.33   95.93
+10 PC10     0.1913    1.20   97.12
+11 PC11     0.1617    1.01   98.13
+12 PC12     0.1288    0.80   98.94
+13 PC13     0.1002    0.63   99.56
+14 PC14     0.0535    0.33   99.90
+15 PC15     0.0137    0.09   99.99
+16 PC16     0.0024    0.01  100.00
+
+Kaiser criterion: 4 components
+70% variance: 3 components
+80% variance: 5 components
+
+Using 3 components (70% variance criterion)
+Note: Kaiser suggests 4 (reference only)
+Warning message:
+In geom_bar(stat = "identity", fill = barfill, color = barcolor,  :
+  Ignoring empty aesthetic: `width`.
+
+=== LOADINGS (first 3 PCs) ===
+                        PC1    PC2    PC3
+Adult_Mortality      -0.262  0.241 -0.020
+infant_deaths        -0.173 -0.527 -0.130
+Alcohol               0.232 -0.087 -0.319
+Hepatitis_B           0.254 -0.014  0.462
+BMI                   0.308 -0.019 -0.171
+under_five_deaths    -0.180 -0.517 -0.143
+Polio                 0.282 -0.130  0.397
+Total_expenditure     0.155  0.051 -0.299
+Diphtheria            0.279 -0.134  0.398
+HIV_AIDS             -0.139  0.199 -0.055
+thinness_10_19_years -0.284 -0.225  0.284
+thinness_5_9_years   -0.282 -0.232  0.283
+Income_composition    0.309 -0.202 -0.076
+Schooling             0.318 -0.154 -0.083
+GDP_log               0.304 -0.139 -0.101
+Population_log       -0.077 -0.352 -0.161
+Warning message:
+Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
+ℹ Please use `linewidth` instead.
+ℹ The deprecated feature was likely used in the ggpubr package.
+  Please report the issue at <https://github.com/kassambara/ggpubr/issues>. 
+Ignoring unknown labels:
+• linetype : "Status"
+
+=== PC REGRESSION ===
+Model (3 PCs): R² = 0.8439 
+Model (5 PCs): R² = 0.9025 
+
+=== 5-PC MODEL SUMMARY ===
+
+Call:
+lm(formula = Life_expectancy ~ PC1 + PC2 + PC3 + PC4 + PC5, data = pc_data)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-10.4830  -1.7228   0.3003   1.9440   7.4286 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) 69.22493    0.21502 321.953   <2e-16 ***
+PC1          2.92659    0.07969  36.725   <2e-16 ***
+PC2         -1.91895    0.14222 -13.493   <2e-16 ***
+PC3          0.18554    0.16765   1.107     0.27    
+PC4         -1.97024    0.19118 -10.305   <2e-16 ***
+PC5         -0.10653    0.24157  -0.441     0.66    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 2.909 on 177 degrees of freedom
+Multiple R-squared:  0.9025,	Adjusted R-squared:  0.8997 
+F-statistic: 327.7 on 5 and 177 DF,  p-value: < 2.2e-16
+
+
+=== CROSS-VALIDATION ===
+   n_PCs     RMSE        R2
+1      1 4.622370 0.7562943
+2      2 3.710047 0.8427472
+3      3 3.709958 0.8409863
+4      4 2.922183 0.9023356
+5      5 3.279269 0.8731810
+6      6 2.942962 0.8989272
+7      7 2.751102 0.9126548
+8      8 2.650708 0.9161928
+9      9 2.519306 0.9268492
+10    10 2.647735 0.9208370
+Optimal PCs: 9 
+
+Standard Regression R²: 0.9402 
+Variables with VIF > 5: 8 
+
+=== REGRESSION DIAGNOSTICS ===
+Shapiro-Wilk test for residual normality:
+  W = 0.9811 , p = 0.0139 
+  WARNING: Residuals may not be normally distributed (p < 0.05)
+
+Breusch-Pagan test for heteroscedasticity:
+  Chi-sq = 4.64 , df = 1 , p = 0.0312 
+  WARNING: Heteroscedasticity detected (p < 0.05)
+`geom_smooth()` using formula = 'y ~ x'
+
+=== ROBUST STANDARD ERRORS ===
+Loading required package: zoo
+
+Attaching package: ‘zoo’
+
+The following objects are masked from ‘package:base’:
+
+    as.Date, as.Date.numeric
+
+Warning message:
+package ‘zoo’ was built under R version 4.5.2 
+Comparing OLS vs Robust (HC3) Standard Errors:
+
+                   Term Estimate OLS_SE Robust_SE SE_Ratio  OLS_p Robust_p
+(Intercept) (Intercept)  69.2249 0.2150    0.2204    1.025 0.0000   0.0000
+PC1                 PC1   2.9266 0.0797    0.0895    1.123 0.0000   0.0000
+PC2                 PC2  -1.9189 0.1422    0.1997    1.404 0.0000   0.0000
+PC3                 PC3   0.1855 0.1677    0.2161    1.289 0.2699   0.3917
+PC4                 PC4  -1.9702 0.1912    0.2201    1.151 0.0000   0.0000
+PC5                 PC5  -0.1065 0.2416    0.2451    1.015 0.6598   0.6643
+
+Interpretation:
+  SE_Ratio > 1: Robust SE larger (OLS underestimates uncertainty)
+  SE_Ratio < 1: Robust SE smaller (OLS overestimates uncertainty)
+
+  All coefficients retain significance status with robust SE
+  Results are ROBUST to heteroscedasticity
+
+=== ROBUST COEFFICIENT TESTS (HC3) ===
+
+t test of coefficients:
+
+             Estimate Std. Error  t value  Pr(>|t|)    
+(Intercept) 69.224932   0.220400 314.0880 < 2.2e-16 ***
+PC1          2.926593   0.089525  32.6903 < 2.2e-16 ***
+PC2         -1.918946   0.199695  -9.6094 < 2.2e-16 ***
+PC3          0.185543   0.216104   0.8586    0.3917    
+PC4         -1.970243   0.220147  -8.9497 4.758e-16 ***
+PC5         -0.106529   0.245089  -0.4347    0.6643    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+============================================================
+REGRESSION DIAGNOSTICS SUMMARY
+============================================================ 
+Residual Normality:         Violated  (Shapiro-Wilk p = 0.014 )
+Homoscedasticity:           Violated  (Breusch-Pagan p = 0.031 )
+Robust SE Needed:           Yes (HC3 SE provided) 
+Model R²:                   0.9025 
+============================================================ 
+
+=== PCA and PC Regression Complete ===
+Run 05_factor_analysis.R next.

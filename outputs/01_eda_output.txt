@@ -1,0 +1,195 @@
+── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
+✔ dplyr     1.1.4     ✔ readr     2.1.6
+✔ forcats   1.0.1     ✔ stringr   1.6.0
+✔ ggplot2   4.0.1     ✔ tibble    3.3.1
+✔ lubridate 1.9.4     ✔ tidyr     1.3.2
+✔ purrr     1.2.0     
+── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter() masks stats::filter()
+✖ dplyr::lag()    masks stats::lag()
+ℹ Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors
+Warning messages:
+1: package ‘ggplot2’ was built under R version 4.5.2 
+2: package ‘tibble’ was built under R version 4.5.2 
+3: package ‘tidyr’ was built under R version 4.5.2 
+4: package ‘readr’ was built under R version 4.5.2 
+corrplot 0.95 loaded
+
+Attaching package: ‘gridExtra’
+
+The following object is masked from ‘package:dplyr’:
+
+    combine
+
+Warning message:
+package ‘MVN’ was built under R version 4.5.2 
+
+Attaching package: ‘rstatix’
+
+The following object is masked from ‘package:ggcorrplot’:
+
+    cor_pmat
+
+The following object is masked from ‘package:stats’:
+
+    filter
+
+Data: 183 countries, 29 variables
+Status: 32 151 
+
+=== Descriptive Statistics ===
+ Life_expectancy Adult_Mortality  infant_deaths         Alcohol        
+ Min.   :46.11   Min.   : 18.75   Min.   :   0.000   Min.   : 0.01438  
+ 1st Qu.:62.48   1st Qu.: 80.41   1st Qu.:   0.000   1st Qu.: 1.25594  
+ Median :72.49   Median :146.56   Median :   2.938   Median : 3.54562  
+ Mean   :69.22   Mean   :164.80   Mean   :  30.407   Mean   : 4.58552  
+ 3rd Qu.:75.11   3rd Qu.:219.59   3rd Qu.:  22.125   3rd Qu.: 7.43969  
+ Max.   :82.54   Max.   :550.06   Max.   :1366.688   Max.   :13.48000  
+  Hepatitis_B         BMI        under_five_deaths       Polio      
+ Min.   :29.88   Min.   :11.19   Min.   :   0.0000   Min.   :29.81  
+ 1st Qu.:67.16   1st Qu.:20.57   1st Qu.:   0.1875   1st Qu.:71.72  
+ Median :81.06   Median :42.68   Median :   3.6875   Median :87.81  
+ Mean   :78.52   Mean   :38.03   Mean   :  42.1793   Mean   :82.58  
+ 3rd Qu.:93.91   3rd Qu.:51.99   3rd Qu.:  30.2188   3rd Qu.:95.88  
+ Max.   :98.88   Max.   :69.43   Max.   :1812.5000   Max.   :98.94  
+ Total_expenditure   Diphtheria       HIV_AIDS       thinness_10_19_years
+ Min.   : 1.911    Min.   :26.81   Min.   : 0.1000   Min.   : 0.100      
+ 1st Qu.: 4.689    1st Qu.:72.38   1st Qu.: 0.1000   1st Qu.: 1.756      
+ Median : 5.928    Median :88.00   Median : 0.1000   Median : 3.663      
+ Mean   : 5.952    Mean   :82.32   Mean   : 1.7477   Mean   : 4.873      
+ 3rd Qu.: 6.948    3rd Qu.:95.69   3rd Qu.: 0.9969   3rd Qu.: 7.166      
+ Max.   :15.972    Max.   :99.00   Max.   :32.9438   Max.   :27.100      
+ thinness_5_9_years Income_composition   Schooling         GDP_log      
+ Min.   : 0.100     Min.   :0.1317     Min.   : 1.531   Min.   : 4.557  
+ 1st Qu.: 1.731     1st Qu.:0.4743     1st Qu.: 9.931   1st Qu.: 6.349  
+ Median : 3.794     Median :0.6573     Median :12.331   Median : 7.450  
+ Mean   : 4.899     Mean   :0.6253     Mean   :11.950   Mean   : 7.472  
+ 3rd Qu.: 7.056     3rd Qu.:0.7680     3rd Qu.:14.109   3rd Qu.: 8.421  
+ Max.   :27.944     Max.   :0.9314     Max.   :20.038   Max.   :10.756  
+ Population_log 
+ Min.   :11.32  
+ 1st Qu.:14.69  
+ Median :15.91  
+ Mean   :15.74  
+ 3rd Qu.:17.00  
+ Max.   :21.00  
+# A tibble: 2 × 6
+  Status         n Life_exp Mortality Schooling   GDP
+  <fct>      <int>    <dbl>     <dbl>     <dbl> <dbl>
+1 Developed     32     79.2      79.7      15.8  9.19
+2 Developing   151     67.1     183.       11.1  7.11
+null device 
+          1 
+
+High correlations (|r| > 0.7):
+Life_expectancy - Adult_Mortality : -0.896 
+Life_expectancy - BMI : 0.727 
+infant_deaths - under_five_deaths : 0.997 
+Hepatitis_B - Polio : 0.85 
+Hepatitis_B - Diphtheria : 0.847 
+Polio - Diphtheria : 0.944 
+BMI - thinness_10_19_years : -0.715 
+BMI - thinness_5_9_years : -0.716 
+thinness_10_19_years - thinness_5_9_years : 0.985 
+Life_expectancy - Income_composition : 0.83 
+Life_expectancy - Schooling : 0.808 
+BMI - Schooling : 0.724 
+Income_composition - Schooling : 0.878 
+Life_expectancy - GDP_log : 0.79 
+Income_composition - GDP_log : 0.812 
+Schooling - GDP_log : 0.79 
+Warning message:
+`aes_string()` was deprecated in ggplot2 3.0.0.
+ℹ Please use tidy evaluation idioms with `aes()`.
+ℹ See also `vignette("ggplot2-in-packages")` for more information. 
+`geom_smooth()` using formula = 'y ~ x'
+`geom_smooth()` using formula = 'y ~ x'
+`geom_smooth()` using formula = 'y ~ x'
+`geom_smooth()` using formula = 'y ~ x'
+Warning messages:
+1: There was 1 warning in `summarise()`.
+ℹ In argument: `text = text_fn(.data$x, .data$y)`.
+ℹ In group 2: `color = Developed`.
+Caused by warning in `cor()`:
+! the standard deviation is zero 
+2: There was 1 warning in `summarise()`.
+ℹ In argument: `text = text_fn(.data$x, .data$y)`.
+ℹ In group 2: `color = Developed`.
+Caused by warning in `cor()`:
+! the standard deviation is zero 
+3: There was 1 warning in `summarise()`.
+ℹ In argument: `text = text_fn(.data$x, .data$y)`.
+ℹ In group 2: `color = Developed`.
+Caused by warning in `cor()`:
+! the standard deviation is zero 
+4: There was 1 warning in `summarise()`.
+ℹ In argument: `text = text_fn(.data$x, .data$y)`.
+ℹ In group 2: `color = Developed`.
+Caused by warning in `cor()`:
+! the standard deviation is zero 
+5: There was 1 warning in `summarise()`.
+ℹ In argument: `text = text_fn(.data$x, .data$y)`.
+ℹ In group 2: `color = Developed`.
+Caused by warning in `cor()`:
+! the standard deviation is zero 
+
+=== MULTIVARIATE NORMALITY ASSESSMENT ===
+Variables: Life_expectancy, Adult_Mortality, Schooling, GDP_log, Income_composition, BMI, HIV_AIDS 
+Sample size: n = 183 
+
+--- 1. Univariate Normality (Shapiro-Wilk) ---
+# A tibble: 7 × 5
+  Variable           variable statistic        p Normal
+  <chr>              <chr>        <dbl>    <dbl> <chr> 
+1 Adult_Mortality    Value        0.907 2.66e- 9 No    
+2 BMI                Value        0.902 1.15e- 9 No    
+3 GDP_log            Value        0.985 4.31e- 2 No    
+4 HIV_AIDS           Value        0.424 6.08e-24 No    
+5 Income_composition Value        0.962 6.80e- 5 No    
+6 Life_expectancy    Value        0.937 3.65e- 7 No    
+7 Schooling          Value        0.988 1.38e- 1 Yes   
+
+Univariate normality violations: 6 of 7 variables
+Note: Univariate histogram plot skipped (MVN version compatibility)
+
+--- 2. Multivariate Normality Tests ---
+
+Mardia's Test:
+             Test Statistic p.value     Method          MVN
+1 Mardia Skewness  1294.634  <0.001 asymptotic ✗ Not normal
+2 Mardia Kurtosis    29.877  <0.001 asymptotic ✗ Not normal
+
+Royston's Test:
+     Test Statistic p.value     Method          MVN
+1 Royston   115.325  <0.001 asymptotic ✗ Not normal
+
+Henze-Zirkler Test:
+           Test Statistic p.value     Method          MVN
+1 Henze-Zirkler     3.286  <0.001 asymptotic ✗ Not normal
+
+--- MVN Test Summary ---
+             Test p_value Conclusion
+1 Mardia Skewness  <0.001 Reject MVN
+2 Mardia Kurtosis  <0.001 Reject MVN
+3         Royston  <0.001 Reject MVN
+4   Henze-Zirkler  <0.001 Reject MVN
+
+--- 3. Chi-Square Q-Q Plot ---
+pdf 
+  2 
+Saved: figures/mvn_qq_plot.png
+
+--- 4. Multivariate Outlier Detection ---
+Note: Outlier detection skipped - covariance matrix is singular.
+This can happen when variables have limited variability.
+
+--- 5. Implications for Downstream Analyses ---
+WARNING: MVN assumption violated.
+Recommendations:
+  - Use robust methods where available
+  - Consider transformations for skewed variables
+  - Interpret parametric tests with caution
+  - Large sample size (n= 183 ) provides some robustness
+
+=== EDA Complete ===
+Figures saved. Run 02_mean_vector_inference.R next.

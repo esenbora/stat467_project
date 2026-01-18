@@ -1,0 +1,215 @@
+── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
+✔ dplyr     1.1.4     ✔ readr     2.1.6
+✔ forcats   1.0.1     ✔ stringr   1.6.0
+✔ ggplot2   4.0.1     ✔ tibble    3.3.1
+✔ lubridate 1.9.4     ✔ tidyr     1.3.2
+✔ purrr     1.2.0     
+── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter() masks stats::filter()
+✖ dplyr::lag()    masks stats::lag()
+ℹ Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors
+Warning messages:
+1: package ‘ggplot2’ was built under R version 4.5.2 
+2: package ‘tibble’ was built under R version 4.5.2 
+3: package ‘tidyr’ was built under R version 4.5.2 
+4: package ‘readr’ was built under R version 4.5.2 
+
+Attaching package: ‘MASS’
+
+The following object is masked from ‘package:dplyr’:
+
+    select
+
+Loading required package: corpcor
+
+Attaching package: ‘Hotelling’
+
+The following object is masked from ‘package:dplyr’:
+
+    summarise
+
+Warning message:
+package ‘MVN’ was built under R version 4.5.2 
+
+Attaching package: ‘ellipse’
+
+The following object is masked from ‘package:graphics’:
+
+    pairs
+
+
+Attaching package: ‘rstatix’
+
+The following object is masked from ‘package:MASS’:
+
+    select
+
+The following object is masked from ‘package:stats’:
+
+    filter
+
+---
+biotools version 4.3
+Data: 183 countries
+Developed: 32 , Developing: 151 
+
+=== Sample Mean Vector ===
+Life_expectancy Adult_Mortality       Schooling         GDP_log             BMI 
+         69.225         164.796          11.950           7.472          38.029 
+     Diphtheria 
+         82.320 
+
+=== MULTIVARIATE NORMALITY CHECK ===
+Royston's MVN Test (overall):
+     Test Statistic p.value     Method          MVN
+1 Royston    85.932  <0.001 asymptotic ✗ Not normal
+
+Mardia's MVN Test (overall):
+             Test Statistic p.value     Method          MVN
+1 Mardia Skewness   315.819  <0.001 asymptotic ✗ Not normal
+2 Mardia Kurtosis     6.168  <0.001 asymptotic ✗ Not normal
+
+--- Univariate Normality (Shapiro-Wilk) ---
+# A tibble: 6 × 5
+  Variable        variable statistic        p Normal
+  <chr>           <chr>        <dbl>    <dbl> <chr> 
+1 Adult_Mortality Value        0.907 2.66e- 9 No    
+2 BMI             Value        0.902 1.15e- 9 No    
+3 Diphtheria      Value        0.863 8.19e-12 No    
+4 GDP_log         Value        0.985 4.31e- 2 No    
+5 Life_expectancy Value        0.937 3.65e- 7 No    
+6 Schooling       Value        0.988 1.38e- 1 Yes   
+null device 
+          1 
+
+=== ONE-SAMPLE HOTELLING'S T² TEST ===
+Hypothesized mean:
+Life_expectancy Adult_Mortality       Schooling         GDP_log             BMI 
+           70.0           150.0            12.0             8.5            25.0 
+     Diphtheria 
+           85.0 
+
+T² = 786.8559 , F = 127.5398 , p = 0e+00 
+Reject H0: Mean vector differs from hypothesized values
+
+=== BONFERRONI CONFIDENCE INTERVALS ===
+                       Variable    Mean   Lower   Upper    H0
+Life_expectancy Life_expectancy  69.225  67.414  71.036  70.0
+Adult_Mortality Adult_Mortality 164.796 145.831 183.762 150.0
+Schooling             Schooling  11.950  11.312  12.587  12.0
+GDP_log                 GDP_log   7.472   7.205   7.740   8.5
+BMI                         BMI  38.029  34.885  41.173  25.0
+Diphtheria           Diphtheria  82.320  79.098  85.542  85.0
+null device 
+          1 
+
+=== TWO-SAMPLE HOTELLING'S T² TEST ===
+Sample sizes: n1 = 32 , n2 = 151 
+
+--- Assumption 1: MVN by Group ---
+
+Developed (n = 32 ):
+             Test Statistic p.value     Method          MVN
+1 Mardia Skewness    90.315   0.002 asymptotic ✗ Not normal
+2 Mardia Kurtosis     0.114   0.909 asymptotic     ✓ Normal
+
+Developing (n = 151 ):
+     Test Statistic p.value     Method          MVN
+1 Royston    76.518  <0.001 asymptotic ✗ Not normal
+
+--- Univariate Normality by Group (Shapiro-Wilk) ---
+# A tibble: 12 × 6
+   Status     Variable        variable statistic             p Normal
+   <fct>      <chr>           <chr>        <dbl>         <dbl> <chr> 
+ 1 Developed  Adult_Mortality Value        0.757 0.00000689    No    
+ 2 Developed  BMI             Value        0.736 0.00000317    No    
+ 3 Developed  Diphtheria      Value        0.782 0.0000192     No    
+ 4 Developed  GDP_log         Value        0.976 0.686         Yes   
+ 5 Developed  Life_expectancy Value        0.840 0.000257      No    
+ 6 Developed  Schooling       Value        0.960 0.276         Yes   
+ 7 Developing Adult_Mortality Value        0.931 0.00000105    No    
+ 8 Developing BMI             Value        0.911 0.0000000517  No    
+ 9 Developing Diphtheria      Value        0.896 0.00000000760 No    
+10 Developing GDP_log         Value        0.988 0.201         Yes   
+11 Developing Life_expectancy Value        0.939 0.00000417    No    
+12 Developing Schooling       Value        0.975 0.00685       No    
+
+--- Assumption 2: Box's M Test (Covariance Homogeneity) ---
+
+	Box's M-test for Homogeneity of Covariance Matrices
+
+data:  X_combined
+Chi-Sq (approx.) = 143.8, df = 21, p-value < 2.2e-16
+
+
+Box's M significant (p < 0.05): Covariance matrices are NOT equal
+WARNING: Pooled covariance assumption violated!
+Consider: Nel-Van der Merwe test or separate covariances
+Proceeding with pooled Sp but results should be interpreted cautiously
+
+Mean difference (Developed - Developing):
+Life_expectancy Adult_Mortality       Schooling         GDP_log             BMI 
+         12.086        -103.148           4.723           2.086          16.694 
+     Diphtheria 
+         13.521 
+
+T² = 109.8608 , F = 17.8043 , p = 4.440892e-16 
+Reject H0: Developed and Developing mean vectors differ significantly
+
+=== Hotelling Package Verification ===
+Test stat:  109.86 
+Numerator df:  6 
+Denominator df:  176 
+P-value:  4.441e-16 
+
+=== UNIVARIATE t-TESTS ===
+Life_expectancy : t = 7.79 , p = 5e-13 * 
+Adult_Mortality : t = -6.02 , p = 9.46e-09 * 
+Schooling : t = 9.01 , p = 2.95e-16 * 
+GDP_log : t = 9.71 , p = 3.27e-18 * 
+BMI : t = 5.85 , p = 2.26e-08 * 
+Diphtheria : t = 4.47 , p = 1.39e-05 * 
+
+=== PERMUTATION TEST (ROBUST ALTERNATIVE) ===
+When MVN assumption is violated, permutation tests provide robust inference
+
+Loading required package: permute
+Permutation MANOVA (adonis2, 999 permutations):
+Permutation test for adonis under reduced model
+Permutation: free
+Number of permutations: 999
+
+adonis2(formula = X_scaled ~ Status, data = df, permutations = 999, method = "euclidean")
+          Df SumOfSqs      R2      F Pr(>F)    
+Model      1   241.76 0.22139 51.466  0.001 ***
+Residual 181   850.24 0.77861                  
+Total    182  1092.00 1.00000                  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Comparison with parametric Hotelling's T²:
+  Parametric p-value:    4.44e-16 
+  Permutation p-value:   1e-03 
+  Both tests significant - results are ROBUST
+
+=== OUTLIER SENSITIVITY ANALYSIS ===
+Mahalanobis cutoff (chi-sq, df= 6 , alpha=0.025): 14.45 
+Outliers identified: 10 countries
+Countries: Botswana, Chad, Democratic Republic of the Congo, Equatorial Guinea, Guinea-Bissau, Kiribati, Lesotho, Nigeria, South Africa, South Sudan 
+
+Two-sample Hotelling's T² comparison:
+  WITH outliers:    T² = 109.86 , p = 4.44e-16 
+  WITHOUT outliers: T² = 107.09 , p = 1.55e-15 
+  Conclusion: Results are ROBUST to outlier removal
+
+============================================================
+STATISTICAL VALIDITY SUMMARY
+============================================================ 
+MVN Assumption (Overall):   Violated 
+Covariance Homogeneity:     Violated (p < 0.05) 
+Outlier Sensitivity:        Robust 
+Robust Alternative:         Permutation MANOVA (vegan::adonis2)
+============================================================ 
+
+=== Mean Vector Inference Complete ===
+Run 03_manova.R next.

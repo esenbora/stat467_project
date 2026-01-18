@@ -1,0 +1,236 @@
+── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
+✔ dplyr     1.1.4     ✔ readr     2.1.6
+✔ forcats   1.0.1     ✔ stringr   1.6.0
+✔ ggplot2   4.0.1     ✔ tibble    3.3.1
+✔ lubridate 1.9.4     ✔ tidyr     1.3.2
+✔ purrr     1.2.0     
+── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter() masks stats::filter()
+✖ dplyr::lag()    masks stats::lag()
+ℹ Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors
+Warning messages:
+1: package ‘ggplot2’ was built under R version 4.5.2 
+2: package ‘tibble’ was built under R version 4.5.2 
+3: package ‘tidyr’ was built under R version 4.5.2 
+4: package ‘readr’ was built under R version 4.5.2 
+
+Attaching package: ‘MASS’
+
+The following object is masked from ‘package:dplyr’:
+
+    select
+
+Loading required package: lattice
+
+Attaching package: ‘caret’
+
+The following object is masked from ‘package:purrr’:
+
+    lift
+
+Type 'citation("pROC")' for a citation.
+
+Attaching package: ‘pROC’
+
+The following objects are masked from ‘package:stats’:
+
+    cov, smooth, var
+
+
+Attaching package: ‘gridExtra’
+
+The following object is masked from ‘package:dplyr’:
+
+    combine
+
+---
+biotools version 4.3
+Warning message:
+package ‘MVN’ was built under R version 4.5.2 
+Data: 183 countries
+
+ Developed Developing 
+        32        151 
+Complete cases: 183 
+
+Train: 129 , Test: 54 
+
+=== LDA ASSUMPTION TESTS ===
+
+1. Box's M Test (Covariance Homogeneity):
+
+	Box's M-test for Homogeneity of Covariance Matrices
+
+data:  X_class_matrix
+Chi-Sq (approx.) = 302.28, df = 36, p-value < 2.2e-16
+
+WARNING: Covariance matrices are NOT equal (p < 0.05)
+Recommendation: Consider QDA or interpret LDA results cautiously
+
+2. Multivariate Normality by Group (Mardia's Test):
+
+  Developed:
+    Skewness p = 0.106 
+    Kurtosis p = 0.551 
+    MVN assumption met
+
+  Developing:
+    Skewness p = <0.001 
+    Kurtosis p = <0.001 
+    WARNING: MVN may be violated for this group
+
+3. Class Proportions (for prior probabilities):
+
+ Developed Developing 
+     0.178      0.822 
+
+=== LDA ===
+Call:
+lda(Status ~ ., data = train_data[, c("Status", pred_vars)])
+
+Prior probabilities of groups:
+ Developed Developing 
+ 0.1782946  0.8217054 
+
+Group means:
+           Life_expectancy Adult_Mortality Schooling  GDP_log
+Developed         79.08261        79.94293  15.78641 9.183010
+Developing        67.65985       178.63502  11.30295 7.165228
+           Income_composition      BMI Diphtheria thinness_10_19_years
+Developed           0.8474484 52.71196   94.14674             1.267391
+Developing          0.5905584 35.41515   81.81663             5.538974
+
+Coefficients of linear discriminants:
+                              LD1
+Life_expectancy       0.004649623
+Adult_Mortality       0.001977305
+Schooling            -0.205905849
+GDP_log              -0.551916793
+Income_composition   -0.099701832
+BMI                   0.030778379
+Diphtheria            0.006903473
+thinness_10_19_years  0.092514913
+Confusion Matrix and Statistics
+
+            Reference
+Prediction   Developed Developing
+  Developed          6          1
+  Developing         3         44
+                                          
+               Accuracy : 0.9259          
+                 95% CI : (0.8211, 0.9794)
+    No Information Rate : 0.8333          
+    P-Value [Acc > NIR] : 0.04099         
+                                          
+                  Kappa : 0.7073          
+                                          
+ Mcnemar's Test P-Value : 0.61708         
+                                          
+            Sensitivity : 0.6667          
+            Specificity : 0.9778          
+         Pos Pred Value : 0.8571          
+         Neg Pred Value : 0.9362          
+             Prevalence : 0.1667          
+         Detection Rate : 0.1111          
+   Detection Prevalence : 0.1296          
+      Balanced Accuracy : 0.8222          
+                                          
+       'Positive' Class : Developed       
+                                          
+
+=== QDA ===
+Confusion Matrix and Statistics
+
+            Reference
+Prediction   Developed Developing
+  Developed          8          1
+  Developing         1         44
+                                          
+               Accuracy : 0.963           
+                 95% CI : (0.8725, 0.9955)
+    No Information Rate : 0.8333          
+    P-Value [Acc > NIR] : 0.003659        
+                                          
+                  Kappa : 0.8667          
+                                          
+ Mcnemar's Test P-Value : 1.000000        
+                                          
+            Sensitivity : 0.8889          
+            Specificity : 0.9778          
+         Pos Pred Value : 0.8889          
+         Neg Pred Value : 0.9778          
+             Prevalence : 0.1667          
+         Detection Rate : 0.1481          
+   Detection Prevalence : 0.1667          
+      Balanced Accuracy : 0.9333          
+                                          
+       'Positive' Class : Developed       
+                                          
+
+=== CROSS-VALIDATION ===
+LDA CV ROC: 0.9424 
+QDA CV ROC: 0.9632 
+Setting direction: controls < cases
+
+LDA AUC: 0.9531 
+Setting direction: controls < cases
+QDA AUC: 0.9852 
+null device 
+          1 
+
+=== PARTITION PLOTS ===
+Creating LDA partition plots for key variable pairs...
+pdf 
+  2 
+pdf 
+  2 
+Saved: figures/classification_partition_lda.png
+Saved: figures/classification_partition_qda.png
+
+=== MISCLASSIFIED (Test Set) ===
+    Country     Status  Predicted Prob_Developed
+1    Cyprus  Developed Developing          0.351
+2    Greece Developing  Developed          0.526
+3 Lithuania  Developed Developing          0.421
+4   Romania  Developed Developing          0.068
+
+=== VARIABLE IMPORTANCE ===
+(Using |LD1 coefficient| × variable SD - a common heuristic)
+
+                                 Variable LD1_Coef      SD Importance
+GDP_log                           GDP_log  -0.5519  1.3572     0.7491
+Schooling                       Schooling  -0.2059  3.2339     0.6659
+BMI                                   BMI   0.0308 15.9458     0.4908
+thinness_10_19_years thinness_10_19_years   0.0925  4.0818     0.3776
+Adult_Mortality           Adult_Mortality   0.0020 96.1852     0.1902
+Diphtheria                     Diphtheria   0.0069 16.3410     0.1128
+Life_expectancy           Life_expectancy   0.0046  9.1864     0.0427
+Income_composition     Income_composition  -0.0997  0.1880     0.0187
+
+=== OUTLIER SENSITIVITY ANALYSIS ===
+Mahalanobis cutoff (chi-sq, df= 8 , alpha=0.025): 17.53 
+Outliers identified: 13 countries
+Countries: Bhutan, Botswana, Chad, Democratic Republic of the Congo, Equatorial Guinea, Grenada, Guinea-Bissau, India, Kiribati, Lesotho, South Africa, South Sudan, Turkmenistan 
+
+LDA Performance Comparison:
+  WITH outliers:    Accuracy = 0.9259 , AUC = 0.9531 
+  WITHOUT outliers: Accuracy = 0.9 , AUC = 0.9214 
+  Conclusion: Results are ROBUST (accuracy/AUC change < 0.05)
+
+QDA Performance Comparison:
+  WITH outliers:    Accuracy = 0.963 , AUC = 0.9852 
+  WITHOUT outliers: Accuracy = 0.92 , AUC = 0.9539 
+
+============================================================
+CLASSIFICATION VALIDITY SUMMARY
+============================================================ 
+Covariance Homogeneity:     Violated - use QDA 
+Outlier Sensitivity:        Robust 
+LDA Test Accuracy:          0.9259 
+LDA Test AUC:               0.9531 
+QDA Test Accuracy:          0.963 
+QDA Test AUC:               0.9852 
+============================================================ 
+
+=== Classification Complete ===
+Run 07_clustering.R next.

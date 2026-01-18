@@ -1,0 +1,221 @@
+── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
+✔ dplyr     1.1.4     ✔ readr     2.1.6
+✔ forcats   1.0.1     ✔ stringr   1.6.0
+✔ ggplot2   4.0.1     ✔ tibble    3.3.1
+✔ lubridate 1.9.4     ✔ tidyr     1.3.2
+✔ purrr     1.2.0     
+── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter() masks stats::filter()
+✖ dplyr::lag()    masks stats::lag()
+ℹ Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors
+Warning messages:
+1: package ‘ggplot2’ was built under R version 4.5.2 
+2: package ‘tibble’ was built under R version 4.5.2 
+3: package ‘tidyr’ was built under R version 4.5.2 
+4: package ‘readr’ was built under R version 4.5.2 
+
+Attaching package: ‘MASS’
+
+The following object is masked from ‘package:dplyr’:
+
+    select
+
+Loading required package: carData
+
+Attaching package: ‘car’
+
+The following object is masked from ‘package:dplyr’:
+
+    recode
+
+The following object is masked from ‘package:purrr’:
+
+    some
+
+---
+biotools version 4.3
+Warning message:
+package ‘MVN’ was built under R version 4.5.2 
+
+Attaching package: ‘rstatix’
+
+The following object is masked from ‘package:MASS’:
+
+    select
+
+The following object is masked from ‘package:stats’:
+
+    filter
+
+Data: 183 countries
+Developed: 32 , Developing: 151 
+
+Complete cases: 183 
+
+=== ASSUMPTIONS ===
+
+ Developed Developing 
+        32        151 
+n_min > p: 32 > 8 
+
+--- Outliers (Mahalanobis) ---
+Chi-sq cutoff (df= 8 , alpha=0.025): 17.53 
+Potential outliers: 14 countries
+First 10: Bhutan, Botswana, Democratic Republic of the Congo, Equatorial Guinea, Grenada, Guinea-Bissau, Kiribati, Lesotho, Liberia, New Zealand ...
+
+--- Multivariate Normality by Group ---
+Test selection: Royston (extension of Shapiro-Wilk, appropriate for n < 5000)
+
+Developed (n = 32):
+     Test Statistic p.value     Method          MVN
+1 Royston    55.567  <0.001 asymptotic ✗ Not normal
+
+Developing (n = 151):
+     Test Statistic p.value     Method          MVN
+1 Royston    94.159  <0.001 asymptotic ✗ Not normal
+
+--- Univariate Normality by Group (Shapiro-Wilk) ---
+Variables violating univariate normality (p < 0.05):
+# A tibble: 12 × 3
+   Status     Variable                       p
+   <fct>      <chr>                      <dbl>
+ 1 Developed  Adult_Mortality    0.00000689   
+ 2 Developed  BMI                0.00000317   
+ 3 Developed  Diphtheria         0.0000192    
+ 4 Developed  Life_expectancy    0.000257     
+ 5 Developed  Polio              0.00155      
+ 6 Developing Adult_Mortality    0.00000105   
+ 7 Developing BMI                0.0000000517 
+ 8 Developing Diphtheria         0.00000000760
+ 9 Developing Income_composition 0.00200      
+10 Developing Life_expectancy    0.00000417   
+11 Developing Polio              0.0000000452 
+12 Developing Schooling          0.00685      
+
+--- Box's M Test (Covariance Homogeneity) ---
+
+	Box's M-test for Homogeneity of Covariance Matrices
+
+data:  X_matrix
+Chi-Sq (approx.) = 231.39, df = 36, p-value < 2.2e-16
+
+
+--- Box's M Interpretation ---
+Box's M significant (p < 0.05)
+Covariance matrices are NOT equal across groups
+Recommendation: Use Pillai's Trace (most robust to violations)
+
+=== GROUP MEANS ===
+# A tibble: 2 × 9
+  Status     Life_expectancy Adult_Mortality Schooling Income_composition   BMI
+  <fct>                <dbl>           <dbl>     <dbl>              <dbl> <dbl>
+1 Developed             79.2            79.7      15.8               0.85  51.8
+2 Developing            67.1           183.       11.1               0.58  35.1
+# ℹ 3 more variables: GDP_log <dbl>, Diphtheria <dbl>, Polio <dbl>
+
+=== MANOVA RESULTS ===
+
+1. PILLAI'S TRACE:
+           Df  Pillai approx F num Df den Df    Pr(>F)    
+Status      1 0.38038   13.352      8    174 5.623e-15 ***
+Residuals 181                                             
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+2. WILKS' LAMBDA:
+           Df   Wilks approx F num Df den Df    Pr(>F)    
+Status      1 0.61962   13.352      8    174 5.623e-15 ***
+Residuals 181                                             
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+3. HOTELLING-LAWLEY:
+           Df Hotelling-Lawley approx F num Df den Df    Pr(>F)    
+Status      1          0.61389   13.352      8    174 5.623e-15 ***
+Residuals 181                                                      
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+4. ROY'S LARGEST ROOT:
+           Df     Roy approx F num Df den Df    Pr(>F)    
+Status      1 0.61389   13.352      8    174 5.623e-15 ***
+Residuals 181                                             
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+=== TEST SUMMARY ===
+              Test Statistic     F  p_value
+1           Pillai    0.3804 13.35 5.62e-15
+2            Wilks    0.6196 13.35 5.62e-15
+3 Hotelling-Lawley    0.6139 13.35 5.62e-15
+4              Roy    0.6139 13.35 5.62e-15
+
+=== UNIVARIATE ANOVAs ===
+            Variable     F            p eta_sq Sig
+1    Life_expectancy 60.70 5.004543e-13  0.251   *
+2    Adult_Mortality 36.25 9.462452e-09  0.167   *
+3          Schooling 81.10 2.953160e-16  0.309   *
+4 Income_composition 79.97 4.398040e-16  0.306   *
+5                BMI 34.22 2.256597e-08  0.159   *
+6            GDP_log 94.32 3.270567e-18  0.343   *
+7         Diphtheria 19.96 1.389236e-05  0.099   *
+8              Polio 21.68 6.209158e-06  0.107   *
+
+=== DISCRIMINANT COEFFICIENTS ===
+Raw coefficients: for original scale variables
+Standardized: for comparison across variables with different scales
+
+            Variable       Raw Standardized
+1            GDP_log  1.223430       1.3500
+2          Schooling  0.352961       0.9512
+3         Diphtheria -0.033185      -0.5161
+4                BMI -0.032828      -0.4814
+5 Income_composition  2.743461       0.4306
+6              Polio  0.008600       0.1283
+7    Adult_Mortality -0.001353      -0.1191
+8    Life_expectancy -0.001572      -0.0125
+
+=== PERMUTATION MANOVA (ROBUST ALTERNATIVE) ===
+Permutation tests do not require MVN or equal covariances
+
+Loading required package: permute
+Permutation MANOVA (adonis2, 999 permutations):
+Permutation test for adonis under reduced model
+Permutation: free
+Number of permutations: 999
+
+adonis2(formula = X_scaled ~ Status, data = df_manova, permutations = 999, method = "euclidean")
+          Df SumOfSqs      R2      F Pr(>F)    
+Model      1      317 0.21772 50.374  0.001 ***
+Residual 181     1139 0.78228                  
+Total    182     1456 1.00000                  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Comparison with parametric MANOVA (Pillai's Trace):
+  Parametric p-value:    5.62e-15 
+  Permutation p-value:   1e-03 
+  Both tests significant - results are ROBUST
+
+=== OUTLIER SENSITIVITY ANALYSIS ===
+Mahalanobis cutoff (chi-sq, df= 8 , alpha=0.025): 17.53 
+Outliers identified: 14 countries
+Countries: Bhutan, Botswana, Democratic Republic of the Congo, Equatorial Guinea, Grenada, Guinea-Bissau, Kiribati, Lesotho, Liberia, New Zealand, Republic of Moldova, South Africa, South Sudan, Turkmenistan 
+
+MANOVA without outliers (n = 169 ):
+  WITH outliers:    Pillai = 0.3804 , p = 5.62e-15 
+  WITHOUT outliers: Pillai = 0.3811 , p = 1.15e-13 
+  Conclusion: Results are ROBUST to outlier removal
+
+============================================================
+STATISTICAL VALIDITY SUMMARY
+============================================================ 
+MVN Assumption:             Violated (use Pillai's Trace) 
+Covariance Homogeneity:     Violated (use Pillai's Trace) 
+Outlier Sensitivity:        Robust 
+Permutation Robustness:     Robust 
+Recommended Test:           Pillai's Trace (most robust)
+============================================================ 
+
+=== MANOVA Complete ===
+Run 04_pca_regression.R next.

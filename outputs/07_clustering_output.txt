@@ -1,0 +1,127 @@
+── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
+✔ dplyr     1.1.4     ✔ readr     2.1.6
+✔ forcats   1.0.1     ✔ stringr   1.6.0
+✔ ggplot2   4.0.1     ✔ tibble    3.3.1
+✔ lubridate 1.9.4     ✔ tidyr     1.3.2
+✔ purrr     1.2.0     
+── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter() masks stats::filter()
+✖ dplyr::lag()    masks stats::lag()
+ℹ Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors
+Warning messages:
+1: package ‘ggplot2’ was built under R version 4.5.2 
+2: package ‘tibble’ was built under R version 4.5.2 
+3: package ‘tidyr’ was built under R version 4.5.2 
+4: package ‘readr’ was built under R version 4.5.2 
+Welcome! Want to learn more? See two factoextra-related books at https://goo.gl/ve3WBa
+
+---------------------
+Welcome to dendextend version 1.19.1
+Type citation('dendextend') for how to cite the package.
+
+Type browseVignettes(package = 'dendextend') for the package vignette.
+The github page is: https://github.com/talgalili/dendextend/
+
+Suggestions and bug-reports can be submitted at: https://github.com/talgalili/dendextend/issues
+You may ask questions at stackoverflow, use the r and dendextend tags: 
+	 https://stackoverflow.com/questions/tagged/dendextend
+
+	To suppress this message use:  suppressPackageStartupMessages(library(dendextend))
+---------------------
+
+
+Attaching package: ‘dendextend’
+
+The following object is masked from ‘package:stats’:
+
+    cutree
+
+Package 'mclust' version 6.1.2
+Type 'citation("mclust")' for citing this R package in publications.
+
+Attaching package: ‘mclust’
+
+The following object is masked from ‘package:dplyr’:
+
+    count
+
+The following object is masked from ‘package:purrr’:
+
+    map
+
+Data: 183 countries
+
+Complete cases: 183 
+
+=== OPTIMAL K ===
+Max silhouette at k = 2 
+Warning message:
+`aes_string()` was deprecated in ggplot2 3.0.0.
+ℹ Please use tidy evaluation idioms with `aes()`.
+ℹ See also `vignette("ggplot2-in-packages")` for more information.
+ℹ The deprecated feature was likely used in the factoextra package.
+  Please report the issue at <https://github.com/kassambara/factoextra/issues>. 
+
+Optimal k selection:
+  Gap statistic (firstSEmax): 2 
+  Silhouette method: 2 
+Using k = 2 (based on Gap statistic)
+
+=== HIERARCHICAL CLUSTERING ===
+null device 
+          1 
+
+=== K-MEANS ===
+Cluster sizes:
+
+  1   2 
+ 65 118 
+BSS/TSS: 52.8 %
+
+Cluster centers:
+  Life_expectancy Adult_Mortality Schooling GDP_log Income_composition    BMI
+1          -1.138           0.995    -1.016  -0.973             -1.032 -1.055
+2           0.627          -0.548     0.560   0.536              0.568  0.581
+  HIV_AIDS Diphtheria
+1    0.643     -0.880
+2   -0.354      0.485
+
+=== VALIDATION ===
+Avg silhouette: 0.481 
+
+Silhouette by cluster:
+  Cluster Avg_Silhouette
+1       1          0.352
+2       2          0.552
+
+Cluster size ratio (max/min): 1.82 
+  cluster size ave.sil.width
+1       1   65          0.35
+2       2  118          0.55
+
+Cluster vs Status:
+   
+    Developed Developing
+  1         0         65
+  2        32         86
+Adjusted Rand Index: -0.036 
+
+=== CLUSTER PROFILES ===
+# A tibble: 2 × 10
+  KM_Cluster     n Life_expectancy Adult_Mortality Schooling GDP_log
+  <fct>      <int>           <dbl>           <dbl>     <dbl>   <dbl>
+1 1             65            58.8            260.      8.66    6.15
+2 2            118            75.0            112.     13.8     8.2 
+# ℹ 4 more variables: Income_composition <dbl>, BMI <dbl>, HIV_AIDS <dbl>,
+#   Diphtheria <dbl>
+
+--- Cluster 1 ---
+n = 65 , Status: Developing=65 
+Examples: Afghanistan, Angola, Bangladesh, Benin, Bhutan 
+
+--- Cluster 2 ---
+n = 118 , Status: Developed=32, Developing=86 
+Examples: Albania, Algeria, Antigua and Barbuda, Argentina, Armenia 
+
+=== Clustering Complete ===
+Run 08_cca.R next.
