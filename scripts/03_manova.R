@@ -213,6 +213,110 @@ means_table <- df_manova %>%
 print(means_table, n = 6, width = Inf)
 write.csv(means_table, "figures/manova_continent_means.csv", row.names = FALSE)
 
+# ----------------------------------------------------------------------------
+# 2.1 Bonferroni Confidence Intervals by Continent
+# ----------------------------------------------------------------------------
+# Simultaneous confidence intervals adjusted for multiple comparisons
+# Alpha is divided by number of groups (k) and variables (p)
+
+cat("\n=== BONFERRONI CONFIDENCE INTERVALS ===\n")
+
+k <- length(levels(df_manova$Continent))  # 6 groups
+p_vars <- length(dv_vars)                 # 8 variables
+alpha <- 0.05
+alpha_bonf <- alpha / (k * p_vars)        # Bonferroni-adjusted alpha
+
+cat("Number of groups (k):", k, "\n")
+cat("Number of variables (p):", p_vars, "\n")
+cat("Bonferroni alpha:", round(alpha_bonf, 5), "\n")
+cat("Critical t-value:", round(qt(1 - alpha_bonf/2, df = nrow(df_manova) - k), 3), "\n\n")
+
+# Calculate CI for each continent and variable
+ci_data <- df_manova %>%
+  group_by(Continent) %>%
+  summarise(
+    n = n(),
+    across(all_of(dv_vars), list(
+      mean = ~mean(.),
+      se = ~sd(.)/sqrt(n())
+    ))
+  )
+
+# Create Bonferroni CI plot for key variables
+t_crit <- qt(1 - alpha_bonf/2, df = nrow(df_manova) - k)
+
+# Reshape for plotting
+ci_long <- df_manova %>%
+  group_by(Continent) %>%
+  summarise(
+    n = n(),
+    across(all_of(dv_vars), list(mean = mean, sd = sd))
+  ) %>%
+  pivot_longer(
+    cols = -c(Continent, n),
+    names_to = c("Variable", ".value"),
+    names_pattern = "(.+)_(mean|sd)"
+  ) %>%
+  mutate(
+    se = sd / sqrt(n),
+    ci_lower = mean - t_crit * se,
+    ci_upper = mean + t_crit * se
+  )
+
+# Plot 1: Bonferroni CI for Life Expectancy
+p_ci_life <- ggplot(ci_long %>% filter(Variable == "Life_expectancy"),
+                    aes(x = reorder(Continent, mean), y = mean)) +
+  geom_point(size = 4, color = "steelblue") +
+  geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), width = 0.2, linewidth = 1) +
+  coord_flip() +
+  labs(title = "Bonferroni 95% CI: Life Expectancy by Continent",
+       subtitle = paste0("Adjusted for ", k * p_vars, " comparisons (α = ", round(alpha_bonf, 5), ")"),
+       x = "", y = "Life Expectancy (years)") +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold"))
+
+ggsave("figures/bonferroni_ci_life_expectancy.png", p_ci_life, width = 10, height = 6, dpi = 150)
+cat("Saved: figures/bonferroni_ci_life_expectancy.png\n")
+
+# Plot 2: Bonferroni CI for all DVs (faceted)
+# Standardize variables for comparison
+ci_long_std <- df_manova %>%
+  mutate(across(all_of(dv_vars), scale)) %>%
+  group_by(Continent) %>%
+  summarise(
+    n = n(),
+    across(all_of(dv_vars), list(mean = mean, sd = sd))
+  ) %>%
+  pivot_longer(
+    cols = -c(Continent, n),
+    names_to = c("Variable", ".value"),
+    names_pattern = "(.+)_(mean|sd)"
+  ) %>%
+  mutate(
+    se = sd / sqrt(n),
+    ci_lower = mean - t_crit * se,
+    ci_upper = mean + t_crit * se
+  )
+
+p_ci_all <- ggplot(ci_long_std, aes(x = Continent, y = mean, color = Continent)) +
+  geom_point(size = 3) +
+  geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), width = 0.2) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray50") +
+  facet_wrap(~Variable, scales = "free_y", ncol = 4) +
+  labs(title = "Bonferroni 95% CI by Continent (Standardized)",
+       subtitle = paste0("Dashed line = overall mean; α = ", round(alpha_bonf, 5)),
+       x = "", y = "Standardized Mean") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 7),
+        legend.position = "none",
+        strip.text = element_text(face = "bold"))
+
+ggsave("figures/bonferroni_ci_all_variables.png", p_ci_all, width = 14, height = 8, dpi = 150)
+cat("Saved: figures/bonferroni_ci_all_variables.png\n")
+
+# Save CI data
+write.csv(ci_long, "figures/bonferroni_ci_data.csv", row.names = FALSE)
+
 # ============================================================================
 # SECTION 3: MANOVA TEST
 # ============================================================================
