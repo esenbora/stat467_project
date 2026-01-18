@@ -454,7 +454,87 @@ if (length(outlier_idx) > 0) {
 }
 
 # ============================================================================
-# SECTION 9: STATISTICAL VALIDITY SUMMARY
+# SECTION 9: BONFERRONI CONFIDENCE INTERVALS BY STATUS
+# ============================================================================
+# Simultaneous confidence intervals for each group (Developed vs Developing)
+# Adjusted for multiple comparisons across groups and variables
+
+cat("\n=== BONFERRONI CONFIDENCE INTERVALS BY STATUS ===\n")
+
+k_status <- 2  # 2 groups
+p_status <- length(selected_vars)  # 6 variables
+alpha_bonf_status <- alpha / (k_status * p_status)
+t_crit_status <- qt(1 - alpha_bonf_status/2, df = n - k_status)
+
+cat("Number of groups (k):", k_status, "\n")
+cat("Number of variables (p):", p_status, "\n")
+cat("Bonferroni alpha:", round(alpha_bonf_status, 5), "\n")
+cat("Critical t-value:", round(t_crit_status, 3), "\n\n")
+
+# Calculate CI for each Status and variable
+ci_status_long <- df %>%
+  group_by(Status) %>%
+  dplyr::summarise(
+    n = n(),
+    across(all_of(selected_vars), list(mean = mean, sd = sd))
+  ) %>%
+  pivot_longer(
+    cols = -c(Status, n),
+    names_to = c("Variable", ".value"),
+    names_pattern = "(.+)_(mean|sd)"
+  ) %>%
+  mutate(
+    se = sd / sqrt(n),
+    ci_lower = mean - t_crit_status * se,
+    ci_upper = mean + t_crit_status * se
+  )
+
+# Plot 1: Bonferroni CI for Life Expectancy by Status
+p_ci_status_life <- ggplot(ci_status_long %>% dplyr::filter(Variable == "Life_expectancy"),
+                           aes(x = Status, y = mean, color = Status)) +
+  geom_point(size = 5) +
+  geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), width = 0.15, linewidth = 1.2) +
+  scale_color_manual(values = c("Developed" = "#2E86AB", "Developing" = "#E94F37")) +
+  labs(title = "Bonferroni 95% CI: Life Expectancy by Status",
+       subtitle = paste0("Adjusted for ", k_status * p_status, " comparisons (α = ", round(alpha_bonf_status, 5), ")"),
+       x = "", y = "Life Expectancy (years)") +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold"),
+        legend.position = "none")
+
+ggsave("figures/bonferroni_ci_status_life_expectancy.png", p_ci_status_life, width = 8, height = 6, dpi = 150)
+cat("Saved: figures/bonferroni_ci_status_life_expectancy.png\n")
+
+# Plot 2: Bonferroni CI for all variables by Status (faceted)
+p_ci_status_all <- ggplot(ci_status_long, aes(x = Status, y = mean, color = Status)) +
+  geom_point(size = 4) +
+  geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), width = 0.15, linewidth = 1) +
+  scale_color_manual(values = c("Developed" = "#2E86AB", "Developing" = "#E94F37")) +
+  facet_wrap(~Variable, scales = "free_y", ncol = 3) +
+  labs(title = "Bonferroni 95% CI by Status (Developed vs Developing)",
+       subtitle = paste0("α = ", round(alpha_bonf_status, 5), " (Bonferroni-adjusted)"),
+       x = "", y = "Mean Value") +
+  theme_minimal() +
+  theme(legend.position = "bottom",
+        strip.text = element_text(face = "bold"),
+        axis.text.x = element_text(angle = 0))
+
+ggsave("figures/bonferroni_ci_status_all_variables.png", p_ci_status_all, width = 12, height = 8, dpi = 150)
+cat("Saved: figures/bonferroni_ci_status_all_variables.png\n")
+
+# Save CI data
+write.csv(ci_status_long, "figures/bonferroni_ci_status_data.csv", row.names = FALSE)
+
+# Print CI table
+cat("\nBonferroni CI Summary:\n")
+ci_summary <- ci_status_long %>%
+  mutate(CI = paste0("[", round(ci_lower, 2), ", ", round(ci_upper, 2), "]")) %>%
+  dplyr::select(Status, Variable, mean, CI) %>%
+  pivot_wider(names_from = Status, values_from = c(mean, CI))
+print(ci_summary)
+
+# ============================================================================
+# SECTION 10: STATISTICAL VALIDITY SUMMARY
 # ============================================================================
 cat("\n", strrep("=", 60), "\n", sep = "")
 cat("STATISTICAL VALIDITY SUMMARY\n")
