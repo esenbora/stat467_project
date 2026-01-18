@@ -261,10 +261,11 @@ cat("Saved: figures/fa_loadings_barplot.png\n")
 # This is subjective but grounded in domain knowledge
 
 cat("\n=== FACTOR INTERPRETATION ===\n")
-cat("F1: Economic Development (GDP, Schooling, Income)\n")
-cat("F2: Healthcare Access (Diphtheria, Polio, Hep B)\n")
-cat("F3: Mortality Burden (Adult/infant/under-5 deaths)\n")
-cat("F4: Nutritional Status (BMI, thinness, Alcohol)\n")
+# Variance explained (approximate): F1=27%, F2=20%, F3=16%, F4=12%
+cat("F1 (27%): Economic Development (Schooling, Alcohol, -Thinness, Income, GDP)\n")
+cat("F2 (20%): Immunization Coverage (Diphtheria, Polio, Hepatitis B)\n")
+cat("F3 (16%): Child Mortality (Infant deaths, Under-5 deaths, +Thinness)\n")
+cat("F4 (12%): HIV/Adult Mortality (Adult Mortality, HIV/AIDS)\n")
 
 # ============================================================================
 # SECTION 8: FACTOR CORRELATIONS (FROM PROMAX)
@@ -306,17 +307,31 @@ write.csv(factor_scores, "figures/fa_factor_scores.csv", row.names = FALSE)
 p_f1f2 <- ggplot(factor_scores, aes(x = F1, y = F2, color = Status)) +
   geom_point(alpha = 0.7, size = 2.5) + stat_ellipse(level = 0.95) +
   scale_color_manual(values = c("#2E86AB", "#E94F37")) +
-  labs(title = "F1 vs F2", x = "F1 (Economic Development)", y = "F2 (Healthcare)") +
+  labs(title = "F1 vs F2", x = "F1 (Economic Development)", y = "F2 (Immunization Coverage)") +
   theme_minimal()
 
 p_f1f3 <- ggplot(factor_scores, aes(x = F1, y = F3, color = Status)) +
   geom_point(alpha = 0.7, size = 2.5) + stat_ellipse(level = 0.95) +
   scale_color_manual(values = c("#2E86AB", "#E94F37")) +
-  labs(title = "F1 vs F3", x = "F1 (Economic Development)", y = "F3 (Mortality)") +
+  labs(title = "F1 vs F3", x = "F1 (Economic Development)", y = "F3 (Child Mortality)") +
+  theme_minimal()
+
+p_f1f4 <- ggplot(factor_scores, aes(x = F1, y = F4, color = Status)) +
+  geom_point(alpha = 0.7, size = 2.5) + stat_ellipse(level = 0.95) +
+  scale_color_manual(values = c("#2E86AB", "#E94F37")) +
+  labs(title = "F1 vs F4", x = "F1 (Economic Development)", y = "F4 (HIV/Adult Mortality)") +
+  theme_minimal()
+
+# F2 vs F4 plot
+p_f2f4 <- ggplot(factor_scores, aes(x = F2, y = F4, color = Status)) +
+  geom_point(alpha = 0.7, size = 2.5) + stat_ellipse(level = 0.95) +
+  scale_color_manual(values = c("#2E86AB", "#E94F37")) +
+  labs(title = "F2 vs F4", x = "F2 (Immunization Coverage)", y = "F4 (HIV/Adult Mortality)") +
   theme_minimal()
 
 ggsave("figures/fa_factor_scores_plot.png",
-       grid.arrange(p_f1f2, p_f1f3, ncol = 2), width = 14, height = 6, dpi = 150)
+       grid.arrange(p_f1f2, p_f1f3, p_f1f4, p_f2f4, ncol = 2, nrow = 2),
+       width = 14, height = 12, dpi = 150)
 
 # ============================================================================
 # SECTION 10: MODEL FIT
