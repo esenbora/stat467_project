@@ -1,0 +1,4 @@
+"Model","Variables","Factors","TLI","RMSEA","BIC"
+"A: Remove Total_expenditure",14,4,0.368,0.358,788.5
+"B: 5 factors",15,5,0.856,0.161,20.4
+"C: Original (4 factors)",15,4,0.416,0.323,762.2

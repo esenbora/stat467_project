@@ -1,0 +1,54 @@
+"Variable","Continent1","Continent2","p_value"
+"Life_expectancy","Asia","Africa",0
+"Life_expectancy","Europe","Africa",0
+"Life_expectancy","Europe","Asia",0
+"Life_expectancy","North America","Africa",0
+"Life_expectancy","Oceania","Africa",0
+"Life_expectancy","Oceania","Europe",0.0387
+"Life_expectancy","South America","Africa",0
+"Adult_Mortality","Asia","Africa",0
+"Adult_Mortality","Europe","Africa",0
+"Adult_Mortality","North America","Africa",0
+"Adult_Mortality","Oceania","Africa",0
+"Adult_Mortality","South America","Africa",0
+"Schooling","Asia","Africa",0
+"Schooling","Europe","Africa",0
+"Schooling","Europe","Asia",0
+"Schooling","North America","Africa",0
+"Schooling","North America","Europe",8e-04
+"Schooling","Oceania","Africa",0
+"Schooling","South America","Africa",0
+"Income_composition","Asia","Africa",0
+"Income_composition","Europe","Africa",0
+"Income_composition","Europe","Asia",0
+"Income_composition","North America","Africa",0
+"Income_composition","North America","Europe",0.0061
+"Income_composition","Oceania","Africa",0.0143
+"Income_composition","Oceania","Europe",0.0039
+"Income_composition","South America","Africa",0
+"BMI","Asia","Africa",0
+"BMI","Europe","Africa",0
+"BMI","Europe","Asia",0
+"BMI","North America","Africa",0
+"BMI","North America","Asia",0.0011
+"BMI","Oceania","Africa",0
+"BMI","Oceania","Asia",0
+"BMI","South America","Africa",0
+"BMI","South America","Asia",0.001
+"GDP_log","Asia","Africa",5e-04
+"GDP_log","Europe","Africa",0
+"GDP_log","Europe","Asia",0
+"GDP_log","North America","Africa",6e-04
+"GDP_log","North America","Europe",0.0177
+"GDP_log","Oceania","Europe",0.0308
+"GDP_log","South America","Africa",0.0256
+"Diphtheria","Asia","Africa",0
+"Diphtheria","Europe","Africa",0
+"Diphtheria","North America","Africa",0
+"Diphtheria","Oceania","Europe",0.0046
+"Diphtheria","South America","Africa",0.0052
+"Polio","Asia","Africa",0
+"Polio","Europe","Africa",0
+"Polio","North America","Africa",8e-04
+"Polio","Oceania","Europe",0.0297
+"Polio","South America","Africa",0.0272

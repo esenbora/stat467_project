@@ -212,6 +212,47 @@ p_loadings <- ggplot(loadings_long, aes(x = Factor, y = Variable, fill = Loading
   scale_fill_gradient2(low = "#E94F37", mid = "white", high = "#2E86AB", limits = c(-1, 1)) +
   labs(title = "Factor Loadings (Varimax)") + theme_minimal()
 ggsave("figures/fa_loadings_heatmap.png", p_loadings, width = 10, height = 10, dpi = 150)
+cat("Saved: figures/fa_loadings_heatmap.png\n")
+
+# ----------------------------------------------------------------------------
+# FA Diagram (from recitation guidelines)
+# ----------------------------------------------------------------------------
+# Displays factor structure as a path diagram
+png("figures/fa_diagram.png", width = 1200, height = 1000, res = 120)
+fa.diagram(fa_varimax, cut = 0.3, digits = 2, main = "Factor Analysis Diagram")
+dev.off()
+cat("Saved: figures/fa_diagram.png\n")
+
+# Promax diagram (allows correlated factors)
+png("figures/fa_diagram_promax.png", width = 1200, height = 1000, res = 120)
+fa.diagram(fa_promax, cut = 0.3, digits = 2, main = "Factor Analysis Diagram (Promax)")
+dev.off()
+cat("Saved: figures/fa_diagram_promax.png\n")
+
+# ----------------------------------------------------------------------------
+# Loadings Barplot (faceted by factor)
+# ----------------------------------------------------------------------------
+# Create bar chart showing loadings for each factor
+loadings_bar <- loadings_long %>%
+  mutate(Sign = ifelse(Loading >= 0, "Positive", "Negative"))
+
+p_loadings_bar <- ggplot(loadings_bar,
+                          aes(x = reorder(Variable, abs(Loading)),
+                              y = Loading, fill = Sign)) +
+  geom_bar(stat = "identity", alpha = 0.8) +
+  geom_hline(yintercept = c(-0.4, 0.4), linetype = "dashed", color = "gray50") +
+  facet_wrap(~Factor, ncol = 2, scales = "free_x") +
+  coord_flip() +
+  scale_fill_manual(values = c("Positive" = "#2E86AB", "Negative" = "#E94F37")) +
+  labs(title = "Factor Loadings by Factor",
+       subtitle = "Dashed lines = significance threshold (|loading| = 0.4)",
+       x = "Variable", y = "Loading") +
+  theme_minimal() +
+  theme(legend.position = "bottom",
+        strip.text = element_text(face = "bold", size = 12))
+
+ggsave("figures/fa_loadings_barplot.png", p_loadings_bar, width = 14, height = 12, dpi = 150)
+cat("Saved: figures/fa_loadings_barplot.png\n")
 
 # ============================================================================
 # SECTION 7: FACTOR INTERPRETATION

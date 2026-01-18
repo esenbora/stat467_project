@@ -60,16 +60,27 @@ filter <- dplyr::filter
 
 df <- read.csv("data_country_level.csv", stringsAsFactors = FALSE)
 df$Status <- as.factor(df$Status)
+df$Continent <- as.factor(df$Continent)
 
-cat("Data:", nrow(df), "countries\n\n")
+cat("Data:", nrow(df), "countries\n")
+cat("Continents:", levels(df$Continent), "\n\n")
+
+# Define continent colors
+continent_colors <- c("Africa" = "#E41A1C", "Asia" = "#377EB8",
+                      "Europe" = "#4DAF4A", "North America" = "#984EA3",
+                      "South America" = "#FF7F00", "Oceania" = "#FFFF33")
 
 # Select variables for clustering
 # These capture health outcomes and socioeconomic development
 cluster_vars <- c("Life_expectancy", "Adult_Mortality", "Schooling", "GDP_log",
                   "Income_composition", "BMI", "HIV_AIDS", "Diphtheria")
 
-df_cluster <- df %>% select(Country, Status, all_of(cluster_vars)) %>% drop_na()
+df_cluster <- df %>%
+  select(Country, Continent, Status, all_of(cluster_vars)) %>%
+  drop_na()
 cat("Complete cases:", nrow(df_cluster), "\n")
+cat("Continent distribution:\n")
+print(table(df_cluster$Continent))
 
 # ============================================================================
 # SECTION 1: DATA STANDARDIZATION
@@ -172,25 +183,53 @@ cat("Using k =", optimal_k, "(based on Gap statistic)\n")
 #   2. Merge closest pair of clusters
 #   3. Repeat until one cluster remains
 #
-# Ward's Method (ward.D2):
-#   - Minimizes increase in total within-cluster variance at each merge
-#   - Produces compact, spherical clusters (similar to K-means)
-#   - Uses squared Euclidean distance
-#
-# Other linkage methods:
+# Four linkage methods (from recitation guidelines):
 #   - single: nearest neighbor (can produce "chaining")
 #   - complete: farthest neighbor (compact but unequal sizes)
 #   - average: UPGMA (balanced approach)
+#   - ward.D2: minimizes within-cluster variance (like K-means)
 
 cat("\n=== HIERARCHICAL CLUSTERING ===\n")
 dist_mat <- dist(X_scaled)
-hc <- hclust(dist_mat, method = "ward.D2")
 
-# Dendrogram with cluster rectangles
+# ----------------------------------------------------------------------------
+# 3.1 Four Dendrograms Comparison (from recitation)
+# ----------------------------------------------------------------------------
+# Compare different linkage methods side by side
+hc_single <- hclust(dist_mat, method = "single")
+hc_complete <- hclust(dist_mat, method = "complete")
+hc_average <- hclust(dist_mat, method = "average")
+hc_ward <- hclust(dist_mat, method = "ward.D2")
+
+# 4-panel dendrogram plot
+png("figures/clustering_dendrograms_4panel.png", width = 2000, height = 2000, res = 120)
+par(mfrow = c(2, 2))
+
+plot(hc_single, main = "Single Linkage", xlab = "", sub = "", cex = 0.4)
+rect.hclust(hc_single, k = optimal_k, border = "red")
+
+plot(hc_complete, main = "Complete Linkage", xlab = "", sub = "", cex = 0.4)
+rect.hclust(hc_complete, k = optimal_k, border = "red")
+
+plot(hc_average, main = "Average Linkage", xlab = "", sub = "", cex = 0.4)
+rect.hclust(hc_average, k = optimal_k, border = "red")
+
+plot(hc_ward, main = "Ward's Method", xlab = "", sub = "", cex = 0.4)
+rect.hclust(hc_ward, k = optimal_k, border = "red")
+
+par(mfrow = c(1, 1))
+dev.off()
+cat("Saved: figures/clustering_dendrograms_4panel.png\n")
+
+# Use Ward's method as primary (best for compact clusters)
+hc <- hc_ward
+
+# Single dendrogram with cluster rectangles (Ward's method)
 png("figures/clustering_dendrogram.png", width = 1800, height = 800, res = 100)
 plot(hc, main = "Dendrogram (Ward's Method)", xlab = "Countries", cex = 0.4)
-rect.hclust(hc, k = optimal_k, border = c("#2E86AB", "#E94F37", "#2EAB5B", "#AB8F2E"))
+rect.hclust(hc, k = optimal_k, border = scales::hue_pal()(optimal_k))
 dev.off()
+cat("Saved: figures/clustering_dendrogram.png\n")
 
 # Cut tree to get cluster assignments
 df_cluster$HC_Cluster <- factor(cutree(hc, k = optimal_k))
@@ -233,8 +272,10 @@ print(round(km$centers, 3))
 write.csv(km$centers, "figures/kmeans_centers.csv")
 
 # Visualize K-means with PCA projection
+# Use a dynamic palette that can handle any k value
+cluster_palette <- scales::hue_pal()(optimal_k)
 p_km <- fviz_cluster(km, data = X_scaled,
-                     palette = c("#2E86AB", "#E94F37", "#2EAB5B", "#AB8F2E"),
+                     palette = cluster_palette,
                      ellipse.type = "convex", repel = TRUE, ggtheme = theme_minimal()) +
   labs(title = paste("K-Means (k =", optimal_k, ")"))
 ggsave("figures/clustering_kmeans.png", p_km, width = 14, height = 10, dpi = 150)
@@ -284,7 +325,7 @@ if (size_ratio > 5) {
 
 # Silhouette plot showing individual observation contributions
 ggsave("figures/clustering_silhouette_plot.png",
-       fviz_silhouette(sil_km, palette = c("#2E86AB", "#E94F37", "#2EAB5B", "#AB8F2E")) + theme_minimal(),
+       fviz_silhouette(sil_km, palette = cluster_palette) + theme_minimal(),
        width = 12, height = 6, dpi = 150)
 
 # ----------------------------------------------------------------------------
@@ -292,15 +333,64 @@ ggsave("figures/clustering_silhouette_plot.png",
 # ----------------------------------------------------------------------------
 # Cross-tabulation shows how clusters align with Developed/Developing status
 cat("\nCluster vs Status:\n")
-cross_tab <- table(df_cluster$KM_Cluster, df_cluster$Status)
-print(cross_tab)
+cross_tab_status <- table(df_cluster$KM_Cluster, df_cluster$Status)
+print(cross_tab_status)
 
-# Adjusted Rand Index (ARI)
-# - Measures similarity between cluster assignments and true labels
-# - Ranges from -1 to 1: 1 = perfect match, 0 = random, <0 = worse than random
-# - "Adjusted" for chance: accounts for expected agreement by random assignment
-ari <- adjustedRandIndex(km$cluster, as.numeric(df_cluster$Status))
-cat("Adjusted Rand Index:", round(ari, 3), "\n")
+# Chi-square test for Status
+chisq_status <- chisq.test(cross_tab_status)
+cat("Chi-square test (Cluster vs Status):\n")
+cat("  X-squared =", round(chisq_status$statistic, 2),
+    ", df =", chisq_status$parameter,
+    ", p =", format(chisq_status$p.value, scientific = TRUE, digits = 3), "\n")
+
+# Adjusted Rand Index (ARI) for Status
+ari_status <- adjustedRandIndex(km$cluster, as.numeric(df_cluster$Status))
+cat("Adjusted Rand Index (Status):", round(ari_status, 3), "\n")
+
+# ----------------------------------------------------------------------------
+# 5.4 External Validation: Comparison with CONTINENT
+# ----------------------------------------------------------------------------
+cat("\n=== CLUSTER VS CONTINENT ===\n")
+cross_tab_continent <- table(df_cluster$KM_Cluster, df_cluster$Continent)
+print(cross_tab_continent)
+
+# Save cross-tabulation
+write.csv(as.data.frame.matrix(cross_tab_continent),
+          "figures/cluster_vs_continent.csv")
+
+# Chi-square test for Continent
+chisq_continent <- chisq.test(cross_tab_continent)
+cat("\nChi-square test (Cluster vs Continent):\n")
+cat("  X-squared =", round(chisq_continent$statistic, 2),
+    ", df =", chisq_continent$parameter,
+    ", p =", format(chisq_continent$p.value, scientific = TRUE, digits = 3), "\n")
+
+if (chisq_continent$p.value < 0.05) {
+  cat("  Significant association between clusters and continents\n")
+} else {
+  cat("  No significant association between clusters and continents\n")
+}
+
+# Adjusted Rand Index (ARI) for Continent
+ari_continent <- adjustedRandIndex(km$cluster, as.numeric(df_cluster$Continent))
+cat("Adjusted Rand Index (Continent):", round(ari_continent, 3), "\n")
+
+# Visualization: Cluster vs Continent heatmap
+cross_tab_df <- as.data.frame(cross_tab_continent)
+colnames(cross_tab_df) <- c("Cluster", "Continent", "Count")
+
+p_cluster_continent <- ggplot(cross_tab_df,
+                               aes(x = Cluster, y = Continent, fill = Count)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = Count), size = 5) +
+  scale_fill_gradient(low = "white", high = "steelblue") +
+  labs(title = "Cluster vs Continent Distribution") +
+  theme_minimal() +
+  theme(axis.text = element_text(size = 12))
+
+ggsave("figures/cluster_vs_continent_heatmap.png", p_cluster_continent,
+       width = 10, height = 8, dpi = 150)
+cat("Saved: figures/cluster_vs_continent_heatmap.png\n")
 
 # ============================================================================
 # SECTION 6: CLUSTER PROFILES
@@ -335,7 +425,7 @@ profiles_std <- X_scaled_df %>%
 
 p_prof <- ggplot(profiles_std, aes(x = Variable, y = Mean, fill = KM_Cluster)) +
   geom_bar(stat = "identity", position = "dodge") +
-  scale_fill_manual(values = c("#2E86AB", "#E94F37", "#2EAB5B", "#AB8F2E")) +
+  scale_fill_manual(values = cluster_palette) +
   labs(title = "Cluster Profiles") + theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ggsave("figures/cluster_profiles_plot.png", p_prof, width = 14, height = 7, dpi = 150)

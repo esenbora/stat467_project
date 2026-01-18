@@ -3,9 +3,9 @@
 # ============================================================================
 # Purpose: Clean and prepare WHO Life Expectancy data for multivariate analysis
 #
-# Input:   data_population_corrected.csv (raw data with fixed population values)
-#          - Original data had implausible population values fixed via World Bank API
-#          - See 00a_population_fix.R for details on population correction
+# Input:   data_population_with_continent.csv (raw data with Continent info)
+#          - Includes Continent column for 6-group MANOVA analysis
+#          - Population values corrected via World Bank API
 #
 # Output:  data_cleaned.csv (2938 rows, year-level observations after imputation)
 #          data_country_level.csv (193 rows, country means across 2000-2015)
@@ -26,9 +26,9 @@ library(VIM)
 # ----------------------------------------------------------------------------
 # STEP 1: Load and Clean Raw Data
 # ----------------------------------------------------------------------------
-# Load the population-corrected dataset
+# Load the population-corrected dataset with Continent information
 # Note: Population values were corrected using World Bank API (see 00a_population_fix.R)
-df_raw <- read.csv("data_population_corrected.csv", stringsAsFactors = FALSE,
+df_raw <- read.csv("data_population_with_continent.csv", stringsAsFactors = FALSE,
                    check.names = FALSE)
 
 # Standardize column names: trim whitespace and replace spaces with underscores
@@ -114,20 +114,24 @@ numeric_cols <- df_clean %>%
   select(where(is.numeric), -Year) %>%
   colnames()
 
+# Exclude Population from imputation (no missing values, causes singularity)
+impute_cols <- setdiff(numeric_cols, "Population")
+
 set.seed(123)  # For reproducibility
-df_for_imputation <- df_clean[, numeric_cols]
+df_for_imputation <- df_clean[, impute_cols]
 
 cat("\n=== MICE IMPUTATION ===\n")
 cat("Method: Predictive Mean Matching (pmm)\n")
 cat("Number of imputations (m):", 5, "\n")
 cat("Max iterations:", 10, "\n")
+cat("Excluding Population from imputation (no missing values)\n")
 
 mice_model <- mice(df_for_imputation, m = 5, maxit = 10, method = 'pmm',
                    seed = 123, printFlag = FALSE)
 
 # Using first imputed dataset (see note above about Rubin's rules)
 df_imputed <- complete(mice_model, 1)
-df_clean[, numeric_cols] <- df_imputed
+df_clean[, impute_cols] <- df_imputed
 
 cat("NOTE: Using single imputed dataset (1 of 5) for simplicity\n")
 cat("Imputation complete. Remaining NA:", sum(is.na(df_clean[, numeric_cols])), "\n")
@@ -153,8 +157,12 @@ df_clean <- df_clean %>%
     under_five_deaths_log = log1p(under_five_deaths)
   )
 
-# Convert Status to factor for downstream analyses
+# Convert Status and Continent to factors for downstream analyses
 df_clean$Status <- as.factor(df_clean$Status)
+df_clean$Continent <- as.factor(df_clean$Continent)
+
+cat("Continent distribution:\n")
+print(table(df_clean$Continent))
 
 # ----------------------------------------------------------------------------
 # STEP 6: Aggregate to Country-Level Data
@@ -171,6 +179,7 @@ numeric_vars <- df_clean %>% select(where(is.numeric), -Year) %>% colnames()
 df_country <- df_clean %>%
   group_by(Country) %>%
   summarise(
+    Continent = first(Continent),  # Continent is constant within country
     Status = first(Status),  # Status is constant within country
     across(all_of(numeric_vars), ~mean(., na.rm = TRUE)),
     n_years = n()  # Track how many years of data per country
@@ -178,7 +187,10 @@ df_country <- df_clean %>%
   ungroup()
 
 cat("Country-level data:", nrow(df_country), "countries\n")
+cat("\nStatus distribution:\n")
 print(table(df_country$Status))
+cat("\nContinent distribution:\n")
+print(table(df_country$Continent))
 
 # ----------------------------------------------------------------------------
 # STEP 7: Multivariate Outlier Detection (Mahalanobis Distance)

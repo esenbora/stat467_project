@@ -1,0 +1,7 @@
+"Group","Test","Statistic","p_value","MVN"
+"Africa","Royston",41.57,"<0.001","✗ Not normal"
+"Asia","Royston",37.835,"<0.001","✗ Not normal"
+"Europe","Royston",71.584,"<0.001","✗ Not normal"
+"North America","Royston",37.286,"<0.001","✗ Not normal"
+"Oceania","Royston",5.466,"0.205","✓ Normal"
+"South America","Royston",3.601,"0.531","✓ Normal"

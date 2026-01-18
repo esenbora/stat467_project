@@ -49,8 +49,15 @@ library(psych)
 # Load data
 df <- read.csv("data_country_level.csv", stringsAsFactors = FALSE)
 df$Status <- as.factor(df$Status)
+df$Continent <- as.factor(df$Continent)
 
-cat("Data:", nrow(df), "countries\n\n")
+cat("Data:", nrow(df), "countries\n")
+cat("Continents:", levels(df$Continent), "\n\n")
+
+# Define continent colors for visualizations
+continent_colors <- c("Africa" = "#E41A1C", "Asia" = "#377EB8",
+                      "Europe" = "#4DAF4A", "North America" = "#984EA3",
+                      "South America" = "#FF7F00", "Oceania" = "#FFFF33")
 
 # Select variables for PCA
 # Exclude response variable (Life_expectancy) - it will be predicted later
@@ -61,7 +68,9 @@ pca_vars <- c("Adult_Mortality", "infant_deaths", "Alcohol", "Hepatitis_B", "BMI
 
 # Prepare data
 X_pca <- df %>% select(all_of(pca_vars)) %>% drop_na()
-df_complete <- df %>% select(Country, Status, Life_expectancy, all_of(pca_vars)) %>% drop_na()
+df_complete <- df %>%
+  select(Country, Continent, Status, Life_expectancy, all_of(pca_vars)) %>%
+  drop_na()
 
 cat("Variables:", length(pca_vars), "\n")
 cat("Complete obs:", nrow(X_pca), "\n\n")
@@ -194,7 +203,7 @@ p_loadings <- ggplot(loadings_df, aes(x = Component, y = Variable, fill = Loadin
 ggsave("figures/pca_loadings_heatmap.png", p_loadings, width = 10, height = 10, dpi = 150)
 
 # ----------------------------------------------------------------------------
-# 5.1 Biplot
+# 5.1 Biplot by Status
 # ----------------------------------------------------------------------------
 # Shows both observations (points) and variables (arrows) in PC space
 # Arrow direction: variable's correlation with PCs
@@ -203,32 +212,101 @@ ggsave("figures/pca_loadings_heatmap.png", p_loadings, width = 10, height = 10, 
 p_biplot <- fviz_pca_biplot(pca_result, geom.ind = "point", col.ind = df_complete$Status,
                              palette = c("#2E86AB", "#E94F37"), addEllipses = TRUE,
                              ellipse.level = 0.95, repel = TRUE, legend.title = "Status") +
-  labs(title = "PCA Biplot") + theme_minimal()
+  labs(title = "PCA Biplot by Status") + theme_minimal()
 ggsave("figures/pca_biplot.png", p_biplot, width = 14, height = 10, dpi = 150)
+cat("Saved: figures/pca_biplot.png\n")
 
 # ----------------------------------------------------------------------------
-# 5.2 Individual Countries in PC Space
+# 5.2 Variable Circle (fviz_pca_var) - from recitation
+# ----------------------------------------------------------------------------
+# Variables colored by their contribution to PCs
+p_var_circle <- fviz_pca_var(pca_result, col.var = "contrib",
+                              gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+                              repel = TRUE) +
+  labs(title = "Variable Contributions Circle") +
+  theme_minimal()
+ggsave("figures/pca_variable_circle.png", p_var_circle, width = 10, height = 10, dpi = 150)
+cat("Saved: figures/pca_variable_circle.png\n")
+
+# Top 5 contributing variables
+p_var_top5 <- fviz_pca_var(pca_result, select.var = list(contrib = 5),
+                            col.var = "contrib",
+                            gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+                            repel = TRUE) +
+  labs(title = "Top 5 Contributing Variables") +
+  theme_minimal()
+ggsave("figures/pca_variable_top5.png", p_var_top5, width = 10, height = 10, dpi = 150)
+cat("Saved: figures/pca_variable_top5.png\n")
+
+# ----------------------------------------------------------------------------
+# 5.3 Individual Countries by Status
 # ----------------------------------------------------------------------------
 pc_scores <- as.data.frame(pca_result$x[, 1:n_components])
 pc_scores$Status <- df_complete$Status
+pc_scores$Continent <- df_complete$Continent
 
-p_ind <- ggplot(pc_scores, aes(x = PC1, y = PC2, color = Status)) +
+p_ind_status <- ggplot(pc_scores, aes(x = PC1, y = PC2, color = Status)) +
   geom_point(alpha = 0.7, size = 2.5) + stat_ellipse(level = 0.95) +
   scale_color_manual(values = c("#2E86AB", "#E94F37")) +
-  labs(title = "Countries in PC Space",
+  labs(title = "Countries in PC Space by Status",
        x = paste0("PC1 (", round(var_exp[1]*100, 1), "%)"),
        y = paste0("PC2 (", round(var_exp[2]*100, 1), "%)")) +
   theme_minimal()
-ggsave("figures/pca_individuals.png", p_ind, width = 10, height = 8, dpi = 150)
+ggsave("figures/pca_individuals.png", p_ind_status, width = 10, height = 8, dpi = 150)
+cat("Saved: figures/pca_individuals.png\n")
 
 # ----------------------------------------------------------------------------
-# 5.3 Variable Contributions
+# 5.4 Individual Countries by CONTINENT (6-group coloring)
+# ----------------------------------------------------------------------------
+p_ind_continent <- fviz_pca_ind(pca_result, geom.ind = "point",
+                                 col.ind = df_complete$Continent,
+                                 palette = continent_colors,
+                                 addEllipses = TRUE,
+                                 ellipse.level = 0.95,
+                                 legend.title = "Continent") +
+  labs(title = "Countries in PC Space by Continent") +
+  theme_minimal()
+ggsave("figures/pca_individuals_continent.png", p_ind_continent, width = 12, height = 10, dpi = 150)
+cat("Saved: figures/pca_individuals_continent.png\n")
+
+# Alternative: ggplot version for more control
+p_ind_continent_gg <- ggplot(pc_scores, aes(x = PC1, y = PC2, color = Continent)) +
+  geom_point(alpha = 0.7, size = 2.5) +
+  stat_ellipse(level = 0.95, linewidth = 1) +
+  scale_color_manual(values = continent_colors) +
+  labs(title = "Countries in PC Space by Continent",
+       x = paste0("PC1 (", round(var_exp[1]*100, 1), "%)"),
+       y = paste0("PC2 (", round(var_exp[2]*100, 1), "%)")) +
+  theme_minimal() +
+  theme(legend.position = "right")
+ggsave("figures/pca_individuals_continent_gg.png", p_ind_continent_gg,
+       width = 12, height = 8, dpi = 150)
+cat("Saved: figures/pca_individuals_continent_gg.png\n")
+
+# ----------------------------------------------------------------------------
+# 5.5 Biplot by Continent
+# ----------------------------------------------------------------------------
+p_biplot_continent <- fviz_pca_biplot(pca_result, geom.ind = "point",
+                                       col.ind = df_complete$Continent,
+                                       palette = continent_colors,
+                                       addEllipses = TRUE,
+                                       ellipse.level = 0.95,
+                                       repel = TRUE,
+                                       legend.title = "Continent") +
+  labs(title = "PCA Biplot by Continent") +
+  theme_minimal()
+ggsave("figures/pca_biplot_continent.png", p_biplot_continent, width = 14, height = 10, dpi = 150)
+cat("Saved: figures/pca_biplot_continent.png\n")
+
+# ----------------------------------------------------------------------------
+# 5.6 Variable Contributions
 # ----------------------------------------------------------------------------
 # Shows which variables contribute most to each PC
 p_contrib1 <- fviz_contrib(pca_result, choice = "var", axes = 1, top = 10) + theme_minimal()
 p_contrib2 <- fviz_contrib(pca_result, choice = "var", axes = 2, top = 10) + theme_minimal()
 ggsave("figures/pca_contributions.png",
        grid.arrange(p_contrib1, p_contrib2, ncol = 2), width = 14, height = 6, dpi = 150)
+cat("Saved: figures/pca_contributions.png\n")
 
 # ============================================================================
 # SECTION 6: PRINCIPAL COMPONENT REGRESSION (PCR)
